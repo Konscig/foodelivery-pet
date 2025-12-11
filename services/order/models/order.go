@@ -1,7 +1,6 @@
 package models
 
 import (
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -17,16 +16,16 @@ const (
 
 type Order struct {
 	gorm.Model
-	ID     uuid.UUID   `gorm:"primaryKey"`
-	UserID uuid.UUID   `gorm:"not null"`
-	RestID uuid.UUID   `gorm:"not null"`
+	ID     string      `gorm:"primaryKey"`
+	UserID string      `gorm:"not null"`
+	RestID string      `gorm:"not null"`
 	Status OrderStatus `gorm:"not null"`
 	Items  []OrderItem `gorm:"foreignKey:OrderID"`
 }
 
 type OrderItem struct {
-	ID       uuid.UUID `gorm:"primaryKey"`
-	OrderID  uuid.UUID
+	ID       string `gorm:"primaryKey"`
+	OrderID  string
 	Name     string
 	Price    string
 	Quantity int64

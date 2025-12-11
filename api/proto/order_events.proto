@@ -21,11 +21,11 @@ message OrderEvent {
 
 message OrderCreatedPayload {
     string user_id = 1;
-    string restaurant_id = 2;
+    string rest_id = 2;
 }
 
 message OrderReadyPayload {
-    string restaurant_id = 1;
+    string rest_id = 1;
 }
 
 message OrderComingPayload {

@@ -7,7 +7,7 @@ import "order_models.proto";
 
 message CreateOrderRequest {
     string user_id = 1;
-    string restaurant_id = 2;
+    string rest_id = 2;
     repeated OrderItem items = 3;
 }
 
