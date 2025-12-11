@@ -3,27 +3,7 @@ syntax = "proto3";
 package order;
 option go_package = "project/api/proto/orderpb";
 
-message Order {
-    string id = 1;
-    string user_id = 2;
-    string restaurant_id = 3;
-    repeated OrderItem items = 4;
-    OrderStatus status = 5;
-}
-
-message OrderItem {
-    string name = 1;
-    int32 quantity = 2;
-}
-
-enum OrderStatus {
-    UNKNOWN = 0;
-    CREATED = 1;
-    READY = 2;
-    COMING = 3;
-    DONE = 4;
-    RATED = 5;
-}
+import "order_models.proto";
 
 message CreateOrderRequest {
     string user_id = 1;

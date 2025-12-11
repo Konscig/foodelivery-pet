@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package events;
+option go_package = "project/api/proto/eventspb";
+
+enum OrderStatus {
+    CREATED = 0;
+    READY = 1;
+    COMING = 2;
+    DONE = 3;
+    RATED = 4;
+}
+
+message OrderEvent {
+    string event_id = 1;
+    string order_id = 2;
+    OrderStatus status = 3;
+    int64 timestamp = 4;
+    bytes payload = 5;
+}
+
+message OrderCreatedPayload {
+    string user_id = 1;
+    string restaurant_id = 2;
+}
+
+message OrderReadyPayload {
+    string restaurant_id = 1;
+}
+
+message OrderComingPayload {
+    string courier_id = 1;
+}
+
+message OrderDonePayload {
+    string courier_id = 1;
+}
+
+message OrderRatedPayload {
+    uint32 rating = 1;
+    string comment = 2;
+}
