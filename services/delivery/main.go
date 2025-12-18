@@ -1,46 +1,53 @@
-package main
+package delivery
 
 import (
 	"context"
 	"log"
 	"os"
-	"os/signal"
-	"syscall"
-	"time"
 
-	"github.com/Konscig/foodelivery-pet/services/delivery/kafka"
+	"github.com/Konscig/foodelivery-pet/api/kafka"
+	deliveryApp "github.com/Konscig/foodelivery-pet/services/delivery/app"
+	"github.com/Konscig/foodelivery-pet/services/delivery/models"
+	redisClient "github.com/Konscig/foodelivery-pet/services/delivery/redis"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 func main() {
-	brokers := []string{getEnv("KAFKA_BROKER", "localhost:9092")}
-	groupID := getEnv("KAFKA_GROUP", "delivery-group")
-	topic := getEnv("KAFKA_TOPIC_ORDER_READY", "order.ready")
-	comingTopic := getEnv("KAFKA_TOPIC_ORDER_COMING", "order.coming")
-	doneTopic := getEnv("KAFKA_TOPIC_ORDER_DONE", "order.done")
-
-	consumer := kafka.NewConsumer(brokers, groupID, topic, comingTopic, doneTopic)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	go func() { <-sigs; log.Println("shutting down delivery..."); cancel() }()
-
-	if err := consumer.Start(ctx); err != nil {
-		log.Printf("delivery consumer finished with error: %v", err)
+	db, err := gorm.Open(
+		postgres.Open(os.Getenv("POSTGRES_DSN")),
+		&gorm.Config{},
+	)
+	if err != nil {
+		log.Fatal("postgres error:", err)
+	}
+	if err := db.AutoMigrate(&models.Delivery{}); err != nil {
+		log.Fatal("migration error:", err)
 	}
 
-	time.Sleep(200 * time.Millisecond)
-	if err := consumer.Close(); err != nil {
-		log.Printf("error closing delivery consumer: %v", err)
-	}
-}
+	redis := redisClient.New(os.Getenv("REDIS_ADDR"))
 
-func getEnv(key, def string) string {
-	v := os.Getenv(key)
-	if v == "" {
-		return def
-	}
-	return v
+	kafkaConsumer := kafka.NewConsumer(
+		[]string{os.Getenv("KAFKA_BROKER")},
+		kafka.TopicOrderReady,
+		"delivery-group",
+	)
+
+	kafkaProducer := kafka.NewProducer(
+		[]string{os.Getenv("KAFKA_BROKER")},
+		"", // topic задаём при SendProtoMessage
+	)
+
+	publisher := deliveryApp.NewPublisher(kafkaProducer)
+
+	deliveryConsumer := deliveryApp.NewConsumer(
+		kafkaConsumer,
+		db,
+		redis,
+		publisher,
+	)
+
+	log.Println("delivery service started")
+
+	deliveryConsumer.Start(context.Background())
 }

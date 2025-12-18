@@ -11,6 +11,7 @@ import (
 	"gorm.io/gorm"
 
 	orderpb "github.com/Konscig/foodelivery-pet/generated/orderpb"
+	"github.com/Konscig/foodelivery-pet/services/order/app"
 	"github.com/Konscig/foodelivery-pet/services/order/models"
 	"github.com/Konscig/foodelivery-pet/services/order/redis"
 
@@ -47,12 +48,10 @@ func (s *server) CreateOrder(ctx context.Context, req *orderpb.CreateOrderReques
 		s.DB.Create(&it)
 	}
 
-	// публикуем событие в Kafka
-	if err := PublishOrderCreated(s.Producer, newOrder); err != nil {
+	if err := app.PublishOrderCreated(s.Producer, newOrder); err != nil {
 		log.Printf("failed to publish order.created: %v", err)
 	}
 
-	// сохраняем статус в Redis
 	s.Redis.SetOrderStatus(orderID, string(models.StatusCreated))
 
 	return &orderpb.CreateOrderResponse{
