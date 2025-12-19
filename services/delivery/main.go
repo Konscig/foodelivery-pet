@@ -1,4 +1,4 @@
-package delivery
+package main
 
 import (
 	"context"
@@ -7,23 +7,12 @@ import (
 
 	"github.com/Konscig/foodelivery-pet/api/kafka"
 	deliveryApp "github.com/Konscig/foodelivery-pet/services/delivery/app"
-	"github.com/Konscig/foodelivery-pet/services/delivery/models"
 	redisClient "github.com/Konscig/foodelivery-pet/services/delivery/redis"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	db, err := gorm.Open(
-		postgres.Open(os.Getenv("POSTGRES_DSN")),
-		&gorm.Config{},
-	)
-	if err != nil {
-		log.Fatal("postgres error:", err)
-	}
-	if err := db.AutoMigrate(&models.Delivery{}); err != nil {
-		log.Fatal("migration error:", err)
-	}
+	godotenv.Load(".env")
 
 	redis := redisClient.New(os.Getenv("REDIS_ADDR"))
 
@@ -42,7 +31,6 @@ func main() {
 
 	deliveryConsumer := deliveryApp.NewConsumer(
 		kafkaConsumer,
-		db,
 		redis,
 		publisher,
 	)

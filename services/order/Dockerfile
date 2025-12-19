@@ -1,15 +1,21 @@
-FROM golang:1.24-alpine
+# Используем официальный Go образ под ARM64
+FROM golang:1.24.4
 
+# Рабочая директория
 WORKDIR /app
 
-COPY go.mod ./
-COPY go.sum ./
+# Копируем зависимости
+COPY go.mod go.sum ./
 RUN go mod download
 
+# Копируем весь проект
 COPY . .
 
-RUN go build -o order ./main.go
+# Собираем бинарник прямо здесь
+RUN go build -o app ./services/order
 
-EXPOSE 8081
+# Делаем исполняемым на всякий случай
+RUN chmod +x app
 
-CMD ["./order"]
+# Точка входа
+CMD ["./app"]

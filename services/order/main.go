@@ -1,13 +1,14 @@
-package order
+package main
 
 import (
 	"context"
 	"log"
 	"net"
+	"os"
 
 	"github.com/google/uuid"
+	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
 	orderpb "github.com/Konscig/foodelivery-pet/generated/orderpb"
@@ -60,17 +61,12 @@ func (s *server) CreateOrder(ctx context.Context, req *orderpb.CreateOrderReques
 }
 
 func main() {
-	producer := kafka.NewProducer([]string{"localhost:9092"}, "order-events")
+	godotenv.Load(".env")
+
+	producer := kafka.NewProducer([]string{os.Getenv("KAFKA_BROKER")}, "order-events")
 	defer producer.Close()
 
-	redisClient := redis.NewRedis("localhost:6379")
-
-	dsn := "host=localhost user=postgres password=postgres dbname=orders port=5432 sslmode=disable"
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		log.Fatalf("failed to connect to db: %v", err)
-	}
-	db.AutoMigrate(&models.Order{}, &models.OrderItem{})
+	redisClient := redis.NewRedis(os.Getenv("REDIS_ADDR"))
 
 	lis, err := net.Listen("tcp", ":8081")
 	if err != nil {
@@ -80,7 +76,6 @@ func main() {
 	s := grpc.NewServer()
 	orderpb.RegisterOrderServiceServer(s, &server{
 		Producer: producer,
-		DB:       db,
 		Redis:    redisClient,
 	})
 

@@ -7,7 +7,7 @@ import (
 
 	"github.com/Konscig/foodelivery-pet/api/kafka"
 	eventspb "github.com/Konscig/foodelivery-pet/generated/eventspb"
-	"github.com/Konscig/foodelivery-pet/services/restaurant/models"
+	"github.com/Konscig/foodelivery-pet/services/restaurant/internal/models"
 	"github.com/Konscig/foodelivery-pet/services/restaurant/redis"
 	"google.golang.org/protobuf/proto"
 	"gorm.io/gorm"

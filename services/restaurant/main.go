@@ -1,4 +1,4 @@
-package restaurant
+package main
 
 import (
 	"context"
@@ -7,16 +7,15 @@ import (
 
 	"github.com/Konscig/foodelivery-pet/api/kafka"
 	"github.com/Konscig/foodelivery-pet/services/restaurant/app"
-	"github.com/Konscig/foodelivery-pet/services/restaurant/models"
+	"github.com/Konscig/foodelivery-pet/services/restaurant/internal"
+	"github.com/Konscig/foodelivery-pet/services/restaurant/internal/models"
 	redisClient "github.com/Konscig/foodelivery-pet/services/restaurant/redis"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
 func main() {
-	db, err := gorm.Open(postgres.Open(os.Getenv("POSTGRES_DSN")), &gorm.Config{})
+	db, err := internal.InitDB()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("postgres error:", err)
 	}
 	db.AutoMigrate(&models.Order{})
 
