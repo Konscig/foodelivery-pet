@@ -22,7 +22,9 @@ message OrderEvent {
 message OrderCreatedPayload {
     string user_id = 1;
     string rest_id = 2;
+    repeated string items = 3;
 }
+
 
 message OrderReadyPayload {
     string rest_id = 1;

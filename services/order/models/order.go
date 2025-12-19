@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/Konscig/foodelivery-pet/generated/orderpb"
 	"gorm.io/gorm"
 )
 
@@ -16,11 +17,11 @@ const (
 
 type Order struct {
 	gorm.Model
-	ID     string      `gorm:"primaryKey"`
-	UserID string      `gorm:"not null"`
-	RestID string      `gorm:"not null"`
-	Status OrderStatus `gorm:"not null"`
-	Items  []OrderItem `gorm:"foreignKey:OrderID"`
+	ID     string               `gorm:"primaryKey"`
+	UserID string               `gorm:"not null"`
+	RestID string               `gorm:"not null"`
+	Status OrderStatus          `gorm:"not null"`
+	Items  []*orderpb.OrderItem `gorm:"not null"`
 }
 
 type OrderItem struct {

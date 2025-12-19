@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
-	"gorm.io/gorm"
+	"google.golang.org/grpc/reflection"
 
 	orderpb "github.com/Konscig/foodelivery-pet/generated/orderpb"
 	"github.com/Konscig/foodelivery-pet/services/order/app"
@@ -22,7 +22,6 @@ import (
 type server struct {
 	orderpb.UnimplementedOrderServiceServer
 	Producer *kafka.Producer
-	DB       *gorm.DB
 	Redis    *redis.RedisClient
 }
 
@@ -34,25 +33,15 @@ func (s *server) CreateOrder(ctx context.Context, req *orderpb.CreateOrderReques
 		UserID: req.UserId,
 		RestID: req.RestId,
 		Status: models.StatusCreated,
+		Items:  req.Items, // просто храним локально, в Redis/Kafka
 	}
 
-	if err := s.DB.Create(newOrder).Error; err != nil {
-		return nil, err
-	}
-
-	for _, item := range req.Items {
-		it := models.OrderItem{
-			OrderID:  orderID,
-			Name:     item.Name,
-			Quantity: item.Quantity,
-		}
-		s.DB.Create(&it)
-	}
-
+	// Публикуем событие order.created
 	if err := app.PublishOrderCreated(s.Producer, newOrder); err != nil {
 		log.Printf("failed to publish order.created: %v", err)
 	}
 
+	// Сохраняем статус в Redis
 	s.Redis.SetOrderStatus(orderID, string(models.StatusCreated))
 
 	return &orderpb.CreateOrderResponse{
@@ -78,6 +67,9 @@ func main() {
 		Producer: producer,
 		Redis:    redisClient,
 	})
+
+	// Включаем reflection для grpcurl
+	reflection.Register(s)
 
 	log.Println("Order service running on :8081")
 	if err := s.Serve(lis); err != nil {
