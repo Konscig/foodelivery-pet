@@ -35,5 +35,5 @@ func (p *Publisher) PublishOrderRated(orderID string, rating uint8, comment stri
 
 	eventBytes, _ := proto.Marshal(event)
 
-	return p.producer.SendProtoMessage(kafka.TopicOrderRated, orderID, eventBytes)
+	return p.producer.SendProtoMessage(eventBytes)
 }

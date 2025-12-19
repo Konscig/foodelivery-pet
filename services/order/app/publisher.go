@@ -1,6 +1,7 @@
 package app
 
 import (
+	"log"
 	"time"
 
 	"github.com/Konscig/foodelivery-pet/api/kafka"
@@ -10,10 +11,13 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func PublishOrderCreated(producer *kafka.Producer, order *models.Order) error {
-	items := make([]string, len(order.Items))
+func PublishOrderCreated(p *kafka.Producer, order *models.Order) error {
+	items := make([]*eventspb.OrderItem, len(order.Items))
 	for i, it := range order.Items {
-		items[i] = it.Name // или fmt.Sprintf("%s:%d", it.Name, it.Quantity)
+		items[i] = &eventspb.OrderItem{
+			Name:     it.Name,
+			Quantity: int32(it.Quantity),
+		}
 	}
 
 	payload := &eventspb.OrderCreatedPayload{
@@ -24,6 +28,7 @@ func PublishOrderCreated(producer *kafka.Producer, order *models.Order) error {
 
 	payloadBytes, err := proto.Marshal(payload)
 	if err != nil {
+		log.Printf("failed to marshal payload: %v", err)
 		return err
 	}
 
@@ -37,8 +42,9 @@ func PublishOrderCreated(producer *kafka.Producer, order *models.Order) error {
 
 	eventBytes, err := proto.Marshal(event)
 	if err != nil {
+		log.Printf("failed to marshal event: %v", err)
 		return err
 	}
 
-	return producer.SendProtoMessage(kafka.TopicOrderCreated, order.ID, eventBytes)
+	return p.SendProtoMessage(eventBytes)
 }

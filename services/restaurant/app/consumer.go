@@ -14,24 +14,29 @@ import (
 )
 
 type Consumer struct {
-	consumer  *kafka.Consumer
-	db        *gorm.DB
-	redis     *redis.Client
-	publisher *Publisher
+	kafkaConsumer *kafka.Consumer
+	db            *gorm.DB
+	redis         *redis.Client
+	publisher     *Publisher
 }
 
 func NewConsumer(
-	consumer *kafka.Consumer,
+	kafkaConsumer *kafka.Consumer,
 	db *gorm.DB,
 	redis *redis.Client,
 	publisher *Publisher,
 ) *Consumer {
-	return &Consumer{consumer, db, redis, publisher}
+	return &Consumer{
+		kafkaConsumer: kafkaConsumer,
+		db:            db,
+		redis:         redis,
+		publisher:     publisher,
+	}
 }
 
 func (c *Consumer) Start(ctx context.Context) {
 	for {
-		msg, err := c.consumer.Reader.ReadMessage(ctx)
+		msg, err := c.kafkaConsumer.Reader.ReadMessage(ctx)
 		if err != nil {
 			log.Println("kafka read error:", err)
 			continue
@@ -39,20 +44,24 @@ func (c *Consumer) Start(ctx context.Context) {
 
 		var event eventspb.OrderEvent
 		if err := proto.Unmarshal(msg.Value, &event); err != nil {
-			log.Println("unmarshal error:", err)
+			log.Println("event unmarshal error:", err)
 			continue
 		}
 
+		// Интересует только CREATED
 		if event.Status != eventspb.OrderStatus_CREATED {
 			continue
 		}
 
 		var payload eventspb.OrderCreatedPayload
-		_ = proto.Unmarshal(event.Payload, &payload)
+		if err := proto.Unmarshal(event.Payload, &payload); err != nil {
+			log.Println("payload unmarshal error:", err)
+			continue
+		}
 
 		log.Println("🍳 cooking order:", event.OrderId)
 
-		time.Sleep(1 * time.Second) // ИМИТАЦИЯ ГОТОВКИ
+		time.Sleep(1 * time.Second) // имитация готовки
 
 		order := models.Order{
 			ID:     event.OrderId,
@@ -61,10 +70,18 @@ func (c *Consumer) Start(ctx context.Context) {
 			Status: "READY",
 		}
 
-		c.db.Save(&order)
+		// Сохраняем в базу с hash partitioning
+		if err := c.db.Save(&order).Error; err != nil {
+			log.Println("db save error:", err)
+		}
+
+		// Сохраняем статус в Redis
 		c.redis.SetOrderStatus(order.ID, "READY")
 
-		_ = c.publisher.PublishOrderReady(order.ID, order.RestID)
+		// Публикуем order.ready
+		if err := c.publisher.PublishOrderReady(order.ID, order.RestID); err != nil {
+			log.Println("publish error:", err)
+		}
 
 		log.Println("✅ order ready:", order.ID)
 	}

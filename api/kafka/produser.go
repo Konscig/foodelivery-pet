@@ -2,38 +2,34 @@ package kafka
 
 import (
 	"context"
-	"log"
 
 	"github.com/segmentio/kafka-go"
 )
 
+// Producer обертка над kafka.Writer
 type Producer struct {
 	writer *kafka.Writer
 }
 
+// NewProducer создаёт продюсер с заранее заданным топиком
 func NewProducer(brokers []string, topic string) *Producer {
 	w := &kafka.Writer{
 		Addr:     kafka.TCP(brokers...),
-		Topic:    topic,
+		Topic:    topic, // топик задаём один раз здесь
 		Balancer: &kafka.LeastBytes{},
 	}
 	return &Producer{writer: w}
 }
 
-func (p *Producer) SendProtoMessage(topic string, key string, value []byte) error {
+// SendProtoMessage отправляет сообщение в Kafka
+func (p *Producer) SendProtoMessage(value []byte) error {
 	msg := kafka.Message{
-		Topic: topic,
-		Key:   []byte(key),
 		Value: value,
 	}
-	err := p.writer.WriteMessages(context.Background(), msg)
-	if err != nil {
-		log.Printf("failed to publish kafka message: %v", err)
-		return err
-	}
-	return nil
+	return p.writer.WriteMessages(context.Background(), msg)
 }
 
+// Close закрывает продюсер
 func (p *Producer) Close() error {
 	return p.writer.Close()
 }

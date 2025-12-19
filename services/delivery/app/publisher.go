@@ -33,12 +33,7 @@ func (p *Publisher) PublishOrderComing(orderID, courierID string) error {
 	}
 
 	eventBytes, _ := proto.Marshal(event)
-
-	return p.producer.SendProtoMessage(
-		kafka.TopicOrderComing,
-		orderID,
-		eventBytes,
-	)
+	return p.producer.SendProtoMessage(eventBytes)
 }
 
 func (p *Publisher) PublishOrderDone(orderID, courierID string) error {
@@ -58,9 +53,5 @@ func (p *Publisher) PublishOrderDone(orderID, courierID string) error {
 
 	eventBytes, _ := proto.Marshal(event)
 
-	return p.producer.SendProtoMessage(
-		kafka.TopicOrderDone,
-		orderID,
-		eventBytes,
-	)
+	return p.producer.SendProtoMessage(eventBytes)
 }

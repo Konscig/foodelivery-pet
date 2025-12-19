@@ -44,6 +44,7 @@ func (c *Consumer) Start(ctx context.Context) {
 			continue
 		}
 
+		// Интересует только READY
 		if event.Status != eventspb.OrderStatus_READY {
 			continue
 		}
@@ -66,8 +67,7 @@ func (c *Consumer) Start(ctx context.Context) {
 			continue
 		}
 
-		// Имитируем доставку
-		time.Sleep(3 * time.Second)
+		time.Sleep(3 * time.Second) // имитация доставки
 
 		// Обновляем статус
 		_ = c.redis.SetOrderStatus(event.OrderId, "DONE")

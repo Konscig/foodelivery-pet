@@ -17,6 +17,7 @@ func NewPublisher(p *kafka.Producer) *Publisher {
 	return &Publisher{producer: p}
 }
 
+// Публикуем order.ready
 func (p *Publisher) PublishOrderReady(orderID, restaurantID string) error {
 	payload := &eventspb.OrderReadyPayload{
 		RestId: restaurantID,
@@ -34,9 +35,5 @@ func (p *Publisher) PublishOrderReady(orderID, restaurantID string) error {
 
 	eventBytes, _ := proto.Marshal(event)
 
-	return p.producer.SendProtoMessage(
-		kafka.TopicOrderReady,
-		orderID,
-		eventBytes,
-	)
+	return p.producer.SendProtoMessage(eventBytes)
 }

@@ -29,6 +29,12 @@ services:
     container_name: fd-redis
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
 
   postgres:
     image: postgres:15
@@ -41,6 +47,12 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${PG_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
 
   order:
     build:
@@ -51,6 +63,9 @@ services:
       - .env
     ports:
       - "8081:8081"
+    depends_on:
+      redis:
+        condition: service_healthy
 
   restaurant:
     build:
@@ -61,6 +76,11 @@ services:
       - .env
     ports:
       - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   delivery:
     build:
@@ -69,6 +89,9 @@ services:
     container_name: fd-delivery
     env_file:
       - .env
+    depends_on:
+      redis:
+        condition: service_healthy
 
   # rating:
   #   build:
@@ -82,6 +105,11 @@ services:
   #     - redis
   #   ports:
   #     - "8084:8080"
+  #   depends_on:
+  #     kafka:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
 
 volumes:
   pgdata:

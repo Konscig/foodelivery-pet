@@ -19,12 +19,16 @@ message OrderEvent {
     bytes payload = 5;
 }
 
+message OrderItem {
+    string name = 1;
+    int32 quantity = 2;
+}
+
 message OrderCreatedPayload {
     string user_id = 1;
     string rest_id = 2;
-    repeated string items = 3;
+    repeated OrderItem items = 3;
 }
-
 
 message OrderReadyPayload {
     string rest_id = 1;

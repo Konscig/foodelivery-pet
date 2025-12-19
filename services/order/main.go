@@ -33,15 +33,13 @@ func (s *server) CreateOrder(ctx context.Context, req *orderpb.CreateOrderReques
 		UserID: req.UserId,
 		RestID: req.RestId,
 		Status: models.StatusCreated,
-		Items:  req.Items, // просто храним локально, в Redis/Kafka
+		Items:  req.Items,
 	}
 
-	// Публикуем событие order.created
 	if err := app.PublishOrderCreated(s.Producer, newOrder); err != nil {
 		log.Printf("failed to publish order.created: %v", err)
 	}
 
-	// Сохраняем статус в Redis
 	s.Redis.SetOrderStatus(orderID, string(models.StatusCreated))
 
 	return &orderpb.CreateOrderResponse{
@@ -52,7 +50,10 @@ func (s *server) CreateOrder(ctx context.Context, req *orderpb.CreateOrderReques
 func main() {
 	godotenv.Load(".env")
 
-	producer := kafka.NewProducer([]string{os.Getenv("KAFKA_BROKER")}, "order-events")
+	producer := kafka.NewProducer(
+		[]string{os.Getenv("KAFKA_BROKER")},
+		"order.created",
+	)
 	defer producer.Close()
 
 	redisClient := redis.NewRedis(os.Getenv("REDIS_ADDR"))

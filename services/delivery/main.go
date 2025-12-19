@@ -18,13 +18,13 @@ func main() {
 
 	kafkaConsumer := kafka.NewConsumer(
 		[]string{os.Getenv("KAFKA_BROKER")},
-		kafka.TopicOrderReady,
+		kafka.TopicOrderReady, // слушаем order.ready
 		"delivery-group",
 	)
 
 	kafkaProducer := kafka.NewProducer(
 		[]string{os.Getenv("KAFKA_BROKER")},
-		"", // topic задаём при SendProtoMessage
+		kafka.TopicOrderComing, // этот топик producer по умолчанию
 	)
 
 	publisher := deliveryApp.NewPublisher(kafkaProducer)
