@@ -21,6 +21,7 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://fd-kafka:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
     ports:
       - "9092:9092"
 
@@ -92,6 +93,15 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+
+  # mockify:
+  #   build:
+  #     context: .
+  #     dockerfile: mockify.Dockerfile
+  #   container_name: fd-mockify
+  #   env_file:
+  #     - .env
+  #   command: ["./mock", "--brokers", "fd-kafka:9092", "--topic", "order.created", "--count", "1"]
 
   # rating:
   #   build:

@@ -52,7 +52,6 @@ func main() {
 
 	producer := kafka.NewProducer(
 		[]string{os.Getenv("KAFKA_BROKER")},
-		"order.created",
 	)
 	defer producer.Close()
 

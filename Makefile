@@ -42,3 +42,10 @@ logs:
 clean:
 	$(COMPOSE) down -v
 	docker system prune -af
+
+## Создание Kafka топиков
+create-topics:
+	$(COMPOSE) exec kafka kafka-topics --bootstrap-server localhost:9092 --create --topic order.created --partitions 1 --replication-factor 1 || true
+	$(COMPOSE) exec kafka kafka-topics --bootstrap-server localhost:9092 --create --topic order.ready --partitions 1 --replication-factor 1 || true
+	$(COMPOSE) exec kafka kafka-topics --bootstrap-server localhost:9092 --create --topic order.coming --partitions 1 --replication-factor 1 || true
+	$(COMPOSE) exec kafka kafka-topics --bootstrap-server localhost:9092 --create --topic order.done --partitions 1 --replication-factor 1 || true

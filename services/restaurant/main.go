@@ -29,7 +29,6 @@ func main() {
 
 	kafkaProducer := kafka.NewProducer(
 		[]string{os.Getenv("KAFKA_BROKER")},
-		kafka.TopicOrderReady, // topic для order.ready
 	)
 
 	publisher := app.NewPublisher(kafkaProducer)

@@ -35,5 +35,5 @@ func (p *Publisher) PublishOrderReady(orderID, restaurantID string) error {
 
 	eventBytes, _ := proto.Marshal(event)
 
-	return p.producer.SendProtoMessage(eventBytes)
+	return p.producer.SendProtoMessage(kafka.TopicOrderReady, eventBytes)
 }

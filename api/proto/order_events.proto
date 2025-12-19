@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package events;
-option go_package = "project/api/proto/eventspb";
+option go_package = "github.com/Konscig/foodelivery-pet/generated/eventspb";
 
 enum OrderStatus {
     CREATED = 0;

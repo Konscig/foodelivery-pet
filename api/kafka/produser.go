@@ -11,18 +11,18 @@ type Producer struct {
 	writer *kafka.Writer
 }
 
-// NewProducer создаёт продюсер с заранее заданным топиком
-func NewProducer(brokers []string, topic string) *Producer {
+// NewProducer создаёт продюсер
+func NewProducer(brokers []string) *Producer {
 	w := &kafka.Writer{
 		Addr:     kafka.TCP(brokers...),
-		Topic:    topic, // топик задаём один раз здесь
 		Balancer: &kafka.LeastBytes{},
 	}
 	return &Producer{writer: w}
 }
 
-// SendProtoMessage отправляет сообщение в Kafka
-func (p *Producer) SendProtoMessage(value []byte) error {
+// SendProtoMessage отправляет сообщение в Kafka в указанный топик
+func (p *Producer) SendProtoMessage(topic string, value []byte) error {
+	p.writer.Topic = topic
 	msg := kafka.Message{
 		Value: value,
 	}

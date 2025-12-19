@@ -46,5 +46,5 @@ func PublishOrderCreated(p *kafka.Producer, order *models.Order) error {
 		return err
 	}
 
-	return p.SendProtoMessage(eventBytes)
+	return p.SendProtoMessage(kafka.TopicOrderCreated, eventBytes)
 }

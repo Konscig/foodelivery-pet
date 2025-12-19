@@ -1,1 +1,1 @@
-package rating
+package main

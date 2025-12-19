@@ -1,4 +1,4 @@
-package mockify
+package main
 
 import (
 	"encoding/json"
