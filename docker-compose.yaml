@@ -25,6 +25,15 @@ services:
     ports:
       - "9092:9092"
 
+  akhq:
+    image: tchiotludo/akhq:0.24.0
+    depends_on:
+      - kafka
+    ports:
+      - "8085:8085"
+    volumes:
+      - ./akhq/application.yml:/app/application.yml
+
   redis:
     image: redis:7
     container_name: fd-redis
