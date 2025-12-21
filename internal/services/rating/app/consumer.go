@@ -12,15 +12,20 @@ import (
 )
 
 type Consumer struct {
-	consumer  *bootstrap.Consumer
+	consumer  bootstrap.EventConsumer
 	service   *Service
 	db        storage.Storage
-	publisher *Publisher
+	publisher OrderRatedPublisher
 }
 
-func NewConsumer(c *bootstrap.Consumer, db storage.Storage, p *Publisher) *Consumer {
+func NewConsumer(
+	c bootstrap.EventConsumer,
+	db storage.Storage,
+	p OrderRatedPublisher,
+) *Consumer {
 	repo := db.(storage.ReviewRepository)
 	service := NewService(repo)
+
 	return &Consumer{
 		consumer:  c,
 		service:   service,
@@ -31,10 +36,11 @@ func NewConsumer(c *bootstrap.Consumer, db storage.Storage, p *Publisher) *Consu
 
 func (c *Consumer) Start(ctx context.Context) {
 	log.Println("rating consumer started")
+
 	for {
 		msg, err := c.consumer.ReadMessage(ctx)
 		if err != nil {
-			log.Println("rating kafka read error:", err)
+			log.Println("rating read error:", err)
 			continue
 		}
 
@@ -57,11 +63,9 @@ func (c *Consumer) Start(ctx context.Context) {
 			continue
 		}
 
-		// Generate random review
-		rating := uint32(3 + (event.EventId[0] % 3)) // 3-5 stars
+		rating := uint32(3 + (event.EventId[0] % 3)) // 3–5 stars
 		comment := "Good food!"
 
-		// Get order to get restaurantID
 		order, err := c.db.GetOrder(event.OrderId)
 		if err != nil {
 			log.Println("get order error:", err)
@@ -69,27 +73,29 @@ func (c *Consumer) Start(ctx context.Context) {
 		}
 		restaurantID := order.RestID
 
-		err = c.service.AddReview(
+		if err := c.service.AddReview(
 			event.OrderId,
 			restaurantID,
 			rating,
 			comment,
-		)
-
-		if err != nil {
+		); err != nil {
 			log.Println("add review error:", err)
 			continue
 		}
 
-		// Publish rated event
-		err = c.publisher.PublishOrderRated(event.OrderId, uint8(rating), comment, restaurantID)
-		if err != nil {
+		if err := c.publisher.PublishOrderRated(
+			event.OrderId,
+			uint8(rating),
+			comment,
+			restaurantID,
+		); err != nil {
 			log.Println("publish rated error:", err)
 		}
 
-		// Update order status
-		err = c.db.UpdateOrderStatus(event.OrderId, models.StatusRated)
-		if err != nil {
+		if err := c.db.UpdateOrderStatus(
+			event.OrderId,
+			models.StatusRated,
+		); err != nil {
 			log.Println("update order status error:", err)
 		}
 	}

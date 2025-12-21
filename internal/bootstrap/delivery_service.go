@@ -6,8 +6,8 @@ import (
 )
 
 type DeliveryService struct {
-	kafkaConsumer *Consumer
-	kafkaProducer *Producer
+	kafkaConsumer EventConsumer
+	kafkaProducer EventProducer
 }
 
 func StartDeliveryService(s *DeliveryService) error {

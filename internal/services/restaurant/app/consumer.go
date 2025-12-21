@@ -14,29 +14,29 @@ import (
 )
 
 type Consumer struct {
-	kafkaConsumer *bootstrap.Consumer
-	db            storage.Storage
-	redis         *bootstrap.RedisClient
-	publisher     *Publisher
+	consumer  bootstrap.EventConsumer
+	db        storage.Storage
+	redis     OrderStatusStore
+	publisher OrderReadyPublisher
 }
 
 func NewConsumer(
-	kafkaConsumer *bootstrap.Consumer,
+	consumer bootstrap.EventConsumer,
 	db storage.Storage,
-	redis *bootstrap.RedisClient,
-	publisher *Publisher,
+	redis OrderStatusStore,
+	publisher OrderReadyPublisher,
 ) *Consumer {
 	return &Consumer{
-		kafkaConsumer: kafkaConsumer,
-		db:            db,
-		redis:         redis,
-		publisher:     publisher,
+		consumer:  consumer,
+		db:        db,
+		redis:     redis,
+		publisher: publisher,
 	}
 }
 
 func (c *Consumer) Start(ctx context.Context) {
 	for {
-		msg, err := c.kafkaConsumer.ReadMessage(ctx)
+		msg, err := c.consumer.ReadMessage(ctx)
 		if err != nil {
 			log.Println("kafka read error:", err)
 			continue
@@ -48,7 +48,6 @@ func (c *Consumer) Start(ctx context.Context) {
 			continue
 		}
 
-		// Интересует только CREATED
 		if event.Status != eventspb.OrderStatus_CREATED {
 			continue
 		}
@@ -77,7 +76,9 @@ func (c *Consumer) Start(ctx context.Context) {
 		}
 
 		// Сохраняем статус в Redis
-		c.redis.SetOrderStatus("order:"+order.ID+":status", "READY")
+		if err := c.redis.SetOrderStatus("order:"+order.ID+":status", "READY"); err != nil {
+			log.Println("redis set status error:", err)
+		}
 
 		// Публикуем order.ready
 		if err := c.publisher.PublishOrderReady(order.ID, order.RestID); err != nil {

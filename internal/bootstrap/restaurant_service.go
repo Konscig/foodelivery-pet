@@ -10,8 +10,8 @@ import (
 type RestaurantService struct {
 	db            *gorm.DB
 	RedisClient   *RedisClient
-	kafkaConsumer *Consumer
-	kafkaProducer *Producer
+	kafkaConsumer EventConsumer
+	kafkaProducer EventProducer
 }
 
 func (s *RestaurantService) StartRestaurantService() error {

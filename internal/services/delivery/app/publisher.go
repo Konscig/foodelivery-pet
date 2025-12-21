@@ -3,17 +3,17 @@ package app
 import (
 	"time"
 
-	kafka "github.com/Konscig/foodelivery-pet/internal/bootstrap"
+	"github.com/Konscig/foodelivery-pet/internal/bootstrap"
 	eventspb "github.com/Konscig/foodelivery-pet/internal/pb/eventspb"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/proto"
 )
 
 type Publisher struct {
-	producer *kafka.Producer
+	producer bootstrap.EventProducer
 }
 
-func NewPublisher(p *kafka.Producer) *Publisher {
+func NewPublisher(p bootstrap.EventProducer) *Publisher {
 	return &Publisher{producer: p}
 }
 
@@ -33,7 +33,12 @@ func (p *Publisher) PublishOrderComing(orderID, courierID string) error {
 	}
 
 	eventBytes, _ := proto.Marshal(event)
-	return p.producer.SendProtoMessage(kafka.TopicOrderComing, []byte(orderID), eventBytes)
+
+	return p.producer.SendProtoMessage(
+		bootstrap.TopicOrderComing,
+		[]byte(orderID),
+		eventBytes,
+	)
 }
 
 func (p *Publisher) PublishOrderDone(orderID, courierID string) error {
@@ -53,5 +58,9 @@ func (p *Publisher) PublishOrderDone(orderID, courierID string) error {
 
 	eventBytes, _ := proto.Marshal(event)
 
-	return p.producer.SendProtoMessage(kafka.TopicOrderDone, []byte(orderID), eventBytes)
+	return p.producer.SendProtoMessage(
+		bootstrap.TopicOrderDone,
+		[]byte(orderID),
+		eventBytes,
+	)
 }

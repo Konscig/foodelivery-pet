@@ -15,28 +15,28 @@ import (
 )
 
 type Consumer struct {
-	kafkaConsumer *bootstrap.Consumer
-	redis         *bootstrap.RedisClient
-	publisher     *Publisher
+	consumer  bootstrap.EventConsumer
+	store     OrderStatusStore
+	publisher OrderEventPublisher
 }
 
 func NewConsumer(
-	kafkaConsumer *bootstrap.Consumer,
-	redis *bootstrap.RedisClient,
-	publisher *Publisher,
+	consumer bootstrap.EventConsumer,
+	store OrderStatusStore,
+	publisher OrderEventPublisher,
 ) *Consumer {
 	return &Consumer{
-		kafkaConsumer: kafkaConsumer,
-		redis:         redis,
-		publisher:     publisher,
+		consumer:  consumer,
+		store:     store,
+		publisher: publisher,
 	}
 }
 
 func (c *Consumer) Start(ctx context.Context) {
 	for {
-		msg, err := c.kafkaConsumer.ReadMessage(ctx)
+		msg, err := c.consumer.ReadMessage(ctx)
 		if err != nil {
-			log.Println("kafka read error:", err)
+			log.Println("read message error:", err)
 			continue
 		}
 
@@ -59,7 +59,10 @@ func (c *Consumer) Start(ctx context.Context) {
 		courierID := uuid.NewString()
 		log.Printf("🚴 courier %s assigned to order %s\n", courierID, event.OrderId)
 
-		_ = c.redis.SetOrderStatus("order:"+event.OrderId+":status", "COMING")
+		_ = c.store.SetOrderStatus(
+			"order:"+event.OrderId+":status",
+			"COMING",
+		)
 
 		if err := c.publisher.PublishOrderComing(event.OrderId, courierID); err != nil {
 			log.Println("publish coming error:", err)
@@ -68,17 +71,15 @@ func (c *Consumer) Start(ctx context.Context) {
 
 		time.Sleep(3 * time.Second)
 
-		_ = c.redis.SetOrderStatus("order:"+event.OrderId+":status", "DONE")
+		_ = c.store.SetOrderStatus(
+			"order:"+event.OrderId+":status",
+			"DONE",
+		)
 
 		if err := c.publisher.PublishOrderDone(event.OrderId, courierID); err != nil {
 			log.Println("publish done error:", err)
 			continue
 		}
-
-		// // Update order status in DB
-		// if err := c.db.UpdateOrderStatus(event.OrderId, models.StatusDone); err != nil {
-		// 	log.Println("update order status error:", err)
-		// }
 
 		log.Printf("✅ order %s delivered by courier %s\n", event.OrderId, courierID)
 	}

@@ -10,10 +10,10 @@ import (
 )
 
 type Publisher struct {
-	producer *bootstrap.Producer
+	producer bootstrap.EventProducer
 }
 
-func NewPublisher(p *bootstrap.Producer) *Publisher {
+func NewPublisher(p bootstrap.EventProducer) *Publisher {
 	return &Publisher{producer: p}
 }
 
@@ -35,5 +35,9 @@ func (p *Publisher) PublishOrderReady(orderID, restaurantID string) error {
 
 	eventBytes, _ := proto.Marshal(event)
 
-	return p.producer.SendProtoMessage(bootstrap.TopicOrderReady, []byte(orderID), eventBytes)
+	return p.producer.SendProtoMessage(
+		bootstrap.TopicOrderReady,
+		[]byte(orderID),
+		eventBytes,
+	)
 }

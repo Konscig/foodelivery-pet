@@ -23,6 +23,5 @@ func main() {
 	publisher := restaurantapp.NewPublisher(producer)
 	restaurantConsumer := restaurantapp.NewConsumer(consumer, pg, redis, publisher)
 
-	// Запуск consumer в goroutine
 	go restaurantConsumer.Start(context.Background())
 }

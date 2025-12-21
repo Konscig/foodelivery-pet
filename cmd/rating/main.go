@@ -17,9 +17,7 @@ func main() {
 	}
 
 	consumer := bootstrap.NewConsumer(cfg, "rating-group-done", bootstrap.TopicOrderDone)
-	log.Println("rating consumer created")
 	producer := bootstrap.NewProducer(cfg)
-	log.Println("rating producer created")
 	pg := bootstrap.InitPGStorage(cfg)
 
 	publisher := ratingapp.NewPublisher(producer)

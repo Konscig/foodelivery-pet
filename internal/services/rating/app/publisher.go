@@ -10,14 +10,19 @@ import (
 )
 
 type Publisher struct {
-	producer *bootstrap.Producer
+	producer bootstrap.EventProducer
 }
 
-func NewPublisher(p *bootstrap.Producer) *Publisher {
+func NewPublisher(p bootstrap.EventProducer) *Publisher {
 	return &Publisher{producer: p}
 }
 
-func (p *Publisher) PublishOrderRated(orderID string, rating uint8, comment string, restaurantID string) error {
+func (p *Publisher) PublishOrderRated(
+	orderID string,
+	rating uint8,
+	comment string,
+	restaurantID string,
+) error {
 	payload := &eventspb.OrderRatedPayload{
 		Rating:       uint32(rating),
 		Comment:      comment,
@@ -36,5 +41,9 @@ func (p *Publisher) PublishOrderRated(orderID string, rating uint8, comment stri
 
 	eventBytes, _ := proto.Marshal(event)
 
-	return p.producer.SendProtoMessage(bootstrap.TopicOrderRated, []byte(orderID), eventBytes)
+	return p.producer.SendProtoMessage(
+		bootstrap.TopicOrderRated,
+		[]byte(orderID),
+		eventBytes,
+	)
 }
