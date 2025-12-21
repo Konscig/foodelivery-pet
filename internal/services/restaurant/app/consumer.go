@@ -7,21 +7,22 @@ import (
 
 	"github.com/Konscig/foodelivery-pet/internal/bootstrap"
 	eventspb "github.com/Konscig/foodelivery-pet/internal/pb/eventspb"
+	"github.com/Konscig/foodelivery-pet/internal/pb/orderpb"
+	"github.com/Konscig/foodelivery-pet/internal/storage"
 	models "github.com/Konscig/foodelivery-pet/internal/storage/models"
 	"google.golang.org/protobuf/proto"
-	"gorm.io/gorm"
 )
 
 type Consumer struct {
 	kafkaConsumer *bootstrap.Consumer
-	db            *gorm.DB
+	db            storage.Storage
 	redis         *bootstrap.RedisClient
 	publisher     *Publisher
 }
 
 func NewConsumer(
 	kafkaConsumer *bootstrap.Consumer,
-	db *gorm.DB,
+	db storage.Storage,
 	redis *bootstrap.RedisClient,
 	publisher *Publisher,
 ) *Consumer {
@@ -66,11 +67,12 @@ func (c *Consumer) Start(ctx context.Context) {
 			ID:     event.OrderId,
 			UserID: payload.UserId,
 			RestID: payload.RestId,
-			Status: "READY",
+			Status: models.StatusReady,
+			Items:  convertItems(payload.Items),
 		}
 
-		// Сохраняем в базу с hash partitioning
-		if err := c.db.Save(&order).Error; err != nil {
+		// Сохраняем в базу
+		if err := c.db.AddOrder(&order); err != nil {
 			log.Println("db save error:", err)
 		}
 
@@ -84,4 +86,15 @@ func (c *Consumer) Start(ctx context.Context) {
 
 		log.Println("✅ order ready:", order.ID)
 	}
+}
+
+func convertItems(items []*eventspb.OrderItem) []*orderpb.OrderItem {
+	result := make([]*orderpb.OrderItem, len(items))
+	for i, item := range items {
+		result[i] = &orderpb.OrderItem{
+			Name:     item.Name,
+			Quantity: int64(item.Quantity),
+		}
+	}
+	return result
 }

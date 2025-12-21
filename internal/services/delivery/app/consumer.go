@@ -75,6 +75,11 @@ func (c *Consumer) Start(ctx context.Context) {
 			continue
 		}
 
+		// // Update order status in DB
+		// if err := c.db.UpdateOrderStatus(event.OrderId, models.StatusDone); err != nil {
+		// 	log.Println("update order status error:", err)
+		// }
+
 		log.Printf("✅ order %s delivered by courier %s\n", event.OrderId, courierID)
 	}
 }

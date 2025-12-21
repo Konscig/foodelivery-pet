@@ -12,7 +12,7 @@ RUN go mod download
 COPY . .
 
 # Собираем бинарник прямо здесь
-RUN go build -o app ./services/delivery
+RUN go build -o app ./cmd/delivery
 
 # Делаем исполняемым на всякий случай
 RUN chmod +x app

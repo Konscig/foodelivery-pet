@@ -22,7 +22,7 @@ func (s *PGstorage) AddDelivery(delivery *models.Delivery) error {
 	return err
 }
 
-func (s *PGstorage) AddReview(review *models.Review) error {
+func (s *PGstorage) CreateReview(review *models.Review) error {
 	_, err := s.db.Exec(context.Background(), `
 		INSERT INTO reviews (id, order_id, restaurant_id, rating, comment)
 		VALUES ($1, $2, $3, $4, $5)

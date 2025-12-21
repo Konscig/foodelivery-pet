@@ -1,12 +1,12 @@
 package main
 
 import (
+	"context"
 	"log"
 
 	"github.com/Konscig/foodelivery-pet/config"
 	"github.com/Konscig/foodelivery-pet/internal/bootstrap"
 	restaurantapp "github.com/Konscig/foodelivery-pet/internal/services/restaurant/app"
-	"google.golang.org/grpc"
 )
 
 func main() {
@@ -23,9 +23,6 @@ func main() {
 	publisher := restaurantapp.NewPublisher(producer)
 	restaurantConsumer := restaurantapp.NewConsumer(consumer, pg, redis, publisher)
 
-	// Запуск gRPC сервера и регистрация gRPC-сервиса ресторана
-	bootstrap.StartGRPCServer(cfg.GRPC.RestaurantPort, func(s *grpc.Server) {
-		// TODO: Зарегистрировать gRPC-сервис ресторана, например:
-		// orderpb.RegisterRestaurantServiceServer(s, restaurantConsumer)
-	})
+	// Запуск consumer в goroutine
+	go restaurantConsumer.Start(context.Background())
 }

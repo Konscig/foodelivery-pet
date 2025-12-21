@@ -5,7 +5,6 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/pkg/errors"
-	"gorm.io/gorm"
 )
 
 type PGstorage struct {
@@ -64,14 +63,31 @@ func (s *PGstorage) initTables() error {
 		return errors.Wrap(err, "init deliveries table")
 	}
 
+	_, err = s.db.Exec(context.Background(), `
+		CREATE TABLE IF NOT EXISTS reviews (
+			id VARCHAR(255) PRIMARY KEY,
+			order_id VARCHAR(255) NOT NULL,
+			restaurant_id VARCHAR(255) NOT NULL,
+			rating INT NOT NULL,
+			comment TEXT,
+			created_at TIMESTAMP DEFAULT NOW()
+		)
+	`)
+	if err != nil {
+		return errors.Wrap(err, "init reviews table")
+	}
+
+	_, err = s.db.Exec(context.Background(), `
+		CREATE TABLE IF NOT EXISTS restaurant_stats (
+			restaurant_id VARCHAR(255) PRIMARY KEY,
+			avg_rating FLOAT,
+			reviews_count INT DEFAULT 0,
+			word_cloud_json TEXT
+		)
+	`)
+	if err != nil {
+		return errors.Wrap(err, "init restaurant_stats table")
+	}
+
 	return nil
-}
-
-// убрать
-type GormReviewRepository struct {
-	db *gorm.DB
-}
-
-func NewGormReviewRepository(db *gorm.DB) *GormReviewRepository {
-	return &GormReviewRepository{db: db}
 }

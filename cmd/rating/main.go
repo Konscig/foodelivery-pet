@@ -1,33 +1,34 @@
 package main
 
 import (
+	"context"
 	"log"
 
 	"github.com/Konscig/foodelivery-pet/config"
 	"github.com/Konscig/foodelivery-pet/internal/bootstrap"
 	ratingapp "github.com/Konscig/foodelivery-pet/internal/services/rating/app"
-	"github.com/Konscig/foodelivery-pet/internal/services/rating/models"
-	"google.golang.org/grpc"
 )
 
 func main() {
+	log.Println("rating service starting")
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatalf("failed to load config: %v", err)
 	}
 
+	consumer := bootstrap.NewConsumer(cfg, "rating-group-done", bootstrap.TopicOrderDone)
+	log.Println("rating consumer created")
 	producer := bootstrap.NewProducer(cfg)
-	consumer := bootstrap.NewConsumer(cfg, "rating-group", bootstrap.TopicOrderRated)
-	redis := bootstrap.NewRedis(cfg)
+	log.Println("rating producer created")
 	pg := bootstrap.InitPGStorage(cfg)
 
-	stat := models.NewStat()
 	publisher := ratingapp.NewPublisher(producer)
-	ratingConsumer := ratingapp.NewConsumer(consumer, redis, pg, publisher, stat)
+	ratingConsumer := ratingapp.NewConsumer(consumer, pg, publisher)
+	log.Println("rating consumer initialized")
 
-	// Запуск gRPC сервера и регистрация gRPC-сервиса рейтинга
-	bootstrap.StartGRPCServer(cfg.GRPC.RatingPort, func(s *grpc.Server) {
-		// TODO: Зарегистрировать gRPC-сервис рейтинга, например:
-		// orderpb.RegisterRatingServiceServer(s, ratingConsumer)
-	})
+	// Запуск consumer в goroutine
+	go ratingConsumer.Start(context.Background())
+
+	// Keep the main goroutine alive
+	select {}
 }

@@ -10,7 +10,7 @@ import (
 type Config struct {
 	Database struct {
 		Host     string
-		Port     string
+		Port     int
 		Username string
 		Password string
 		DBName   string
@@ -36,7 +36,7 @@ func Load() (*Config, error) {
 	cfg := &Config{}
 
 	cfg.Database.Host = os.Getenv("PG_HOST")
-	cfg.Database.Port = os.Getenv("PG_PORT")
+	cfg.Database.Port = getEnvAsInt("PG_PORT", 5432)
 	cfg.Database.Username = os.Getenv("PG_USER")
 	cfg.Database.Password = os.Getenv("PG_PASSWORD")
 	cfg.Database.DBName = os.Getenv("PG_DB")
@@ -48,7 +48,7 @@ func Load() (*Config, error) {
 
 	// gRPC ports (по умолчанию 50051, 50052, 50053, 50054)
 	cfg.GRPC.DeliveryPort = getEnvAsInt("GRPC_DELIVERY_PORT", 50051)
-	cfg.GRPC.OrderPort = getEnvAsInt("GRPC_ORDER_PORT", 50052)
+	cfg.GRPC.OrderPort = getEnvAsInt("GRPC_ORDER_PORT", 8081)
 	cfg.GRPC.RatingPort = getEnvAsInt("GRPC_RATING_PORT", 50053)
 	cfg.GRPC.RestaurantPort = getEnvAsInt("GRPC_RESTAURANT_PORT", 50054)
 

@@ -35,5 +35,5 @@ func (p *Publisher) PublishOrderReady(orderID, restaurantID string) error {
 
 	eventBytes, _ := proto.Marshal(event)
 
-	return p.producer.SendProtoMessage(bootstrap.TopicOrderReady, eventBytes)
+	return p.producer.SendProtoMessage(bootstrap.TopicOrderReady, []byte(orderID), eventBytes)
 }

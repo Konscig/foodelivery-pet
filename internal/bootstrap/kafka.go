@@ -34,9 +34,10 @@ func NewConsumer(broker *config.Config, groupID string, topic string) *Consumer 
 	}
 }
 
-func (p *Producer) SendProtoMessage(topic string, value []byte) error {
+func (p *Producer) SendProtoMessage(topic string, key []byte, value []byte) error {
 	p.writer.Topic = topic
 	msg := kafka.Message{
+		Key:   key,
 		Value: value,
 	}
 	return p.writer.WriteMessages(context.Background(), msg)

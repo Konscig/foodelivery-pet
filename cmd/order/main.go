@@ -5,8 +5,10 @@ import (
 
 	"github.com/Konscig/foodelivery-pet/config"
 	"github.com/Konscig/foodelivery-pet/internal/bootstrap"
+	"github.com/Konscig/foodelivery-pet/internal/pb/orderpb"
 	orderapp "github.com/Konscig/foodelivery-pet/internal/services/order/app"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 func main() {
@@ -16,15 +18,14 @@ func main() {
 	}
 
 	producer := bootstrap.NewProducer(cfg)
-	consumer := bootstrap.NewConsumer(cfg, "order-group", bootstrap.TopicOrderCreated)
 	redis := bootstrap.NewRedis(cfg)
 
 	publisher := orderapp.NewPublisher(producer)
-	orderConsumer := orderapp.NewConsumer(consumer, redis, publisher)
+	orderService := orderapp.NewService(redis, publisher)
 
 	// Запуск gRPC сервера и регистрация gRPC-сервиса заказов
 	bootstrap.StartGRPCServer(cfg.GRPC.OrderPort, func(s *grpc.Server) {
-		// TODO: Зарегистрировать gRPC-сервис заказов, например:
-		// orderpb.RegisterOrderServiceServer(s, orderConsumer)
+		orderpb.RegisterOrderServiceServer(s, orderService)
+		reflection.Register(s)
 	})
 }

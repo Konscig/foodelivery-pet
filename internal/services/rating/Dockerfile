@@ -8,8 +8,8 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o order ./main.go
+RUN go build -o rating ./cmd/rating
 
-EXPOSE 8081
+EXPOSE 8083
 
-CMD ["./order"]
+CMD ["./rating"]

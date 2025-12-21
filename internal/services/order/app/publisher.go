@@ -4,12 +4,21 @@ import (
 	"log"
 	"time"
 
+	"github.com/Konscig/foodelivery-pet/internal/bootstrap"
 	eventspb "github.com/Konscig/foodelivery-pet/internal/pb/eventspb"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/proto"
 )
 
-func PublishOrderCreated(publish func([]byte) error, orderID, userID, restID string, items []string) error {
+type Publisher struct {
+	producer *bootstrap.Producer
+}
+
+func NewPublisher(p *bootstrap.Producer) *Publisher {
+	return &Publisher{producer: p}
+}
+
+func (p *Publisher) PublishOrderCreated(orderID, userID, restID string, items []string) error {
 	pbItems := make([]*eventspb.OrderItem, len(items))
 	for i, name := range items {
 		pbItems[i] = &eventspb.OrderItem{
@@ -39,5 +48,5 @@ func PublishOrderCreated(publish func([]byte) error, orderID, userID, restID str
 		log.Printf("failed to marshal event: %v", err)
 		return err
 	}
-	return publish(eventBytes)
+	return p.producer.SendProtoMessage(bootstrap.TopicOrderCreated, []byte(orderID), eventBytes)
 }

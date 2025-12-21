@@ -24,6 +24,12 @@ services:
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
     ports:
       - "9092:9092"
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   akhq:
     image: tchiotludo/akhq:0.24.0
@@ -67,12 +73,13 @@ services:
   order:
     build:
       context: .
-      dockerfile: services/order/Dockerfile
+      dockerfile: internal/services/order/Dockerfile
     container_name: fd-order
     env_file:
       - .env
     ports:
       - "8081:8081"
+      - "50052:50052"
     depends_on:
       redis:
         condition: service_healthy
@@ -80,7 +87,7 @@ services:
   restaurant:
     build:
       context: .
-      dockerfile: services/restaurant/Dockerfile
+      dockerfile: internal/services/restaurant/Dockerfile
     container_name: fd-restaurant
     env_file:
       - .env
@@ -95,7 +102,7 @@ services:
   delivery:
     build:
       context: .
-      dockerfile: services/delivery/Dockerfile
+      dockerfile: internal/services/delivery/Dockerfile
     container_name: fd-delivery
     env_file:
       - .env
@@ -103,32 +110,20 @@ services:
       redis:
         condition: service_healthy
 
-  # mockify:
-  #   build:
-  #     context: .
-  #     dockerfile: mockify.Dockerfile
-  #   container_name: fd-mockify
-  #   env_file:
-  #     - .env
-  #   command: ["./mock", "--brokers", "fd-kafka:9092", "--topic", "order.created", "--count", "1"]
-
-  # rating:
-  #   build:
-  #     context: ./services/rating
-  #     dockerfile: Dockerfile
-  #   container_name: fd-rating
-  #   env_file:
-  #     - .env
-  #   depends_on:
-  #     - kafka
-  #     - redis
-  #   ports:
-  #     - "8084:8080"
-  #   depends_on:
-  #     kafka:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
+  rating:
+    build:
+      context: .
+      dockerfile: internal/services/rating/Dockerfile
+    container_name: fd-rating
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
 
 volumes:
   pgdata:

@@ -17,10 +17,11 @@ func NewPublisher(p *bootstrap.Producer) *Publisher {
 	return &Publisher{producer: p}
 }
 
-func (p *Publisher) PublishOrderRated(orderID string, rating uint8, comment string) error {
+func (p *Publisher) PublishOrderRated(orderID string, rating uint8, comment string, restaurantID string) error {
 	payload := &eventspb.OrderRatedPayload{
-		Rating:  uint32(rating),
-		Comment: comment,
+		Rating:       uint32(rating),
+		Comment:      comment,
+		RestaurantId: restaurantID,
 	}
 
 	payloadBytes, _ := proto.Marshal(payload)
@@ -35,5 +36,5 @@ func (p *Publisher) PublishOrderRated(orderID string, rating uint8, comment stri
 
 	eventBytes, _ := proto.Marshal(event)
 
-	return p.producer.SendProtoMessage(bootstrap.TopicOrderRated, eventBytes)
+	return p.producer.SendProtoMessage(bootstrap.TopicOrderRated, []byte(orderID), eventBytes)
 }
