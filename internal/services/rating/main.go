@@ -1,4 +1,4 @@
-package bootstrap
+package main
 
 import (
 	"context"
@@ -11,9 +11,7 @@ import (
 	"github.com/Konscig/foodelivery-pet/internal/services/rating/internal/models"
 )
 
-type RatingService struct{}
-
-func (s *RatingService) Start() {
+func main() {
 	db, err := internal.InitDB()
 	if err != nil {
 		log.Fatal(err)

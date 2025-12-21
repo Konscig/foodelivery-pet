@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/Konscig/foodelivery-pet/config"
+	"github.com/Konscig/foodelivery-pet/internal/storage/pgstorage"
 )
 
 func InitPGStorage(cfg *config.Config) *pgstorage.PGstorage {

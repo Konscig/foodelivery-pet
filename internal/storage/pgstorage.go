@@ -1,8 +1,7 @@
-package pgstorage
+package storage
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/pkg/errors"
@@ -12,7 +11,7 @@ type PGstorage struct {
 	db *pgxpool.Pool
 }
 
-func NewPGStorge(connString string) (*PGstorage, error) {
+func NewPGStorge(connString string) (Storage, error) {
 
 	config, err := pgxpool.ParseConfig(connString)
 	if err != nil {
@@ -35,16 +34,34 @@ func NewPGStorge(connString string) (*PGstorage, error) {
 }
 
 func (s *PGstorage) initTables() error {
-	sql := fmt.Sprintf(`
-    CREATE TABLE IF NOT EXISTS %v (
-        %v SERIAL PRIMARY KEY,
-        %v VARCHAR(100) NOT NULL,
-        %v VARCHAR(255) UNIQUE NOT NULL,
-        %v INT
-    )`, tableName, IDСolumnName, NameСolumnName, EmailСolumnName, AgeСolumnName)
-	_, err := s.db.Exec(context.Background(), sql)
+	_, err := s.db.Exec(context.Background(), `
+		CREATE TABLE IF NOT EXISTS orders (
+			id VARCHAR(255) PRIMARY KEY,
+			user_id VARCHAR(255) NOT NULL,
+			rest_id VARCHAR(255) NOT NULL,
+			status VARCHAR(50) NOT NULL,
+			items JSONB,
+			created_at TIMESTAMP DEFAULT NOW(),
+			updated_at TIMESTAMP DEFAULT NOW()
+		)
+	`)
 	if err != nil {
-		return errors.Wrap(err, "initition tables")
+		return errors.Wrap(err, "init orders table")
 	}
+
+	_, err = s.db.Exec(context.Background(), `
+		CREATE TABLE IF NOT EXISTS deliveries (
+			id VARCHAR(255) PRIMARY KEY,
+			order_id VARCHAR(255) NOT NULL,
+			courier_id VARCHAR(255),
+			status VARCHAR(50) NOT NULL,
+			created_at TIMESTAMP DEFAULT NOW(),
+			updated_at TIMESTAMP DEFAULT NOW()
+		)
+	`)
+	if err != nil {
+		return errors.Wrap(err, "init deliveries table")
+	}
+
 	return nil
 }

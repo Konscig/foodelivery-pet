@@ -1,4 +1,4 @@
-package bootstrap
+package main
 
 import (
 	"context"
@@ -12,9 +12,7 @@ import (
 	redisClient "github.com/Konscig/foodelivery-pet/internal/services/restaurant/redis"
 )
 
-type RestaurantService struct{}
-
-func (s *RestaurantService) Start() {
+func main() {
 	db, err := internal.InitDB()
 	if err != nil {
 		log.Fatal("postgres error:", err)
@@ -46,5 +44,3 @@ func (s *RestaurantService) Start() {
 
 	restaurantConsumer.Start(context.Background())
 }
-
-// Убедитесь, что все зависимости корректно подключены и логика завершена.
