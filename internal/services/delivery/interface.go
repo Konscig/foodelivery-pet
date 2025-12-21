@@ -1,5 +1,5 @@
 package delivery
 
 type DeliveryService interface {
-	Start()
+	Start() error
 }

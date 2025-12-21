@@ -13,3 +13,9 @@ type Storage interface {
 	GetDelivery(id string) (*models.Delivery, error)
 	UpdateDeliveryStatus(id string, status string) error
 }
+
+type ReviewRepository interface {
+	CreateReview(review *models.Review) error
+	UpdateRestaurantStats(restaurantID string) error
+	GetRestaurantStats(restaurantID string) (*models.RestaurantStats, error)
+}

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -21,6 +22,12 @@ type Config struct {
 	Kafka struct {
 		Broker string
 	}
+	GRPC struct {
+		DeliveryPort   int
+		OrderPort      int
+		RatingPort     int
+		RestaurantPort int
+	}
 }
 
 func Load() (*Config, error) {
@@ -39,5 +46,24 @@ func Load() (*Config, error) {
 
 	cfg.Kafka.Broker = os.Getenv("KAFKA_BROKER")
 
+	// gRPC ports (по умолчанию 50051, 50052, 50053, 50054)
+	cfg.GRPC.DeliveryPort = getEnvAsInt("GRPC_DELIVERY_PORT", 50051)
+	cfg.GRPC.OrderPort = getEnvAsInt("GRPC_ORDER_PORT", 50052)
+	cfg.GRPC.RatingPort = getEnvAsInt("GRPC_RATING_PORT", 50053)
+	cfg.GRPC.RestaurantPort = getEnvAsInt("GRPC_RESTAURANT_PORT", 50054)
+
 	return cfg, nil
+}
+
+func getEnvAsInt(name string, defaultVal int) int {
+	val := os.Getenv(name)
+	if val == "" {
+		return defaultVal
+	}
+	var i int
+	_, err := fmt.Sscanf(val, "%d", &i)
+	if err != nil {
+		return defaultVal
+	}
+	return i
 }

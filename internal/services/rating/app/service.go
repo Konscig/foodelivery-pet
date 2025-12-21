@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/Konscig/foodelivery-pet/internal/storage"
+	models "github.com/Konscig/foodelivery-pet/internal/storage/models"
 )
 
 // Refactored Service to use a repository for database operations
@@ -14,7 +15,7 @@ func NewService(repo storage.ReviewRepository) *Service {
 }
 
 func (s *Service) AddReview(orderID, restaurantID string, rating uint32, comment string) error {
-	review := storage.Review{
+	review := models.Review{
 		ID:           orderID,
 		OrderID:      orderID,
 		RestaurantID: restaurantID,

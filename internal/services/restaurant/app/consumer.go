@@ -7,7 +7,7 @@ import (
 
 	"github.com/Konscig/foodelivery-pet/internal/bootstrap"
 	eventspb "github.com/Konscig/foodelivery-pet/internal/pb/eventspb"
-	"github.com/Konscig/foodelivery-pet/internal/services/restaurant/internal/models"
+	models "github.com/Konscig/foodelivery-pet/internal/storage/models"
 	"google.golang.org/protobuf/proto"
 	"gorm.io/gorm"
 )
@@ -35,7 +35,7 @@ func NewConsumer(
 
 func (c *Consumer) Start(ctx context.Context) {
 	for {
-		msg, err := c.kafkaConsumer.Reader.ReadMessage(ctx)
+		msg, err := c.kafkaConsumer.ReadMessage(ctx)
 		if err != nil {
 			log.Println("kafka read error:", err)
 			continue

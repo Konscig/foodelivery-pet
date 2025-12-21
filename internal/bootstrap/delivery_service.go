@@ -10,14 +10,7 @@ type DeliveryService struct {
 	kafkaProducer *Producer
 }
 
-func NewDeliveryService() *DeliveryService {
-	return &DeliveryService{
-		kafkaConsumer: NewConsumer([]string{"localhost:9092"}, "delivery.created", "delivery-group"),
-		kafkaProducer: NewProducer([]string{"localhost:9092"}),
-	}
-}
-
-func (s *DeliveryService) Start() error {
+func StartDeliveryService(s *DeliveryService) error {
 	log.Println("Запуск сервиса Delivery")
 	ctx := context.Background()
 	for {

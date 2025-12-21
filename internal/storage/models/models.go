@@ -49,20 +49,28 @@ type Review struct {
 	Comment      string
 }
 
-type ReviewRepository interface {
-	CreateReview(review *Review) error
-}
-
-type GormReviewRepository struct {
+type ReviewRepository struct {
 	db *gorm.DB
 }
 
-func NewGormReviewRepository(db *gorm.DB) *GormReviewRepository {
-	return &GormReviewRepository{db: db}
+func NewReviewRepository(db *gorm.DB) *ReviewRepository {
+	return &ReviewRepository{db: db}
 }
 
-func (r *GormReviewRepository) CreateReview(review *Review) error {
-	return r.db.Create(review).Error
+func (r *ReviewRepository) CreateReview(review *Review) error {
+	return r.db.Create(&review).Error
+}
+
+func (r *ReviewRepository) NewService(repo *ReviewRepository) error {
+	return nil
+}
+
+func (r *ReviewRepository) UpdateRestaurantStats(restaurantID string) error {
+	return nil
+}
+
+func (r *ReviewRepository) GetRestaurantStats(restaurantID string) (*RestaurantStats, error) {
+	return &RestaurantStats{}, nil
 }
 
 type RestaurantStats struct {

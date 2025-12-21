@@ -1,30 +1,30 @@
-package order
+package main
 
 import (
+	"log"
+
+	"github.com/Konscig/foodelivery-pet/config"
 	"github.com/Konscig/foodelivery-pet/internal/bootstrap"
-	"github.com/Konscig/foodelivery-pet/internal/bootstrap/kafkaadapter"
-	"github.com/Konscig/foodelivery-pet/internal/pb/orderpb"
-	"github.com/Konscig/foodelivery-pet/internal/services/order/config"
-	"github.com/Konscig/foodelivery-pet/internal/services/order/grpcadapter"
-	"github.com/Konscig/foodelivery-pet/internal/services/order/order"
+	orderapp "github.com/Konscig/foodelivery-pet/internal/services/order/app"
+	"google.golang.org/grpc"
 )
 
 func main() {
-	cfg := config.MustLoad()
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatalf("failed to load config: %v", err)
+	}
 
-	pg := bootstrap.InitPostgres(cfg)
-	redis := bootstrap.InitRedis(cfg)
+	producer := bootstrap.NewProducer(cfg)
+	consumer := bootstrap.NewConsumer(cfg, "order-group", bootstrap.TopicOrderCreated)
+	redis := bootstrap.NewRedis(cfg)
 
-	producer := bootstrap.InitKafkaProducer(cfg, cfg.Kafka.OrderCreatedTopic)
+	publisher := orderapp.NewPublisher(producer)
+	orderConsumer := orderapp.NewConsumer(consumer, redis, publisher)
 
-	orderPublisher := kafkaadapter.NewOrderProducer(producer)
-	orderService := order.NewService(pg, redis, orderPublisher)
-
-	grpcServer := bootstrap.InitGRPCServer()
-	orderpb.RegisterOrderServiceServer(
-		grpcServer,
-		grpcadapter.NewOrderServer(orderService),
-	)
-
-	bootstrap.RunGRPC(grpcServer, cfg.GRPC.Port)
+	// Запуск gRPC сервера и регистрация gRPC-сервиса заказов
+	bootstrap.StartGRPCServer(cfg.GRPC.OrderPort, func(s *grpc.Server) {
+		// TODO: Зарегистрировать gRPC-сервис заказов, например:
+		// orderpb.RegisterOrderServiceServer(s, orderConsumer)
+	})
 }

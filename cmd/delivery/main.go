@@ -1,40 +1,30 @@
 package main
 
 import (
-	"context"
 	"log"
-	"os"
 
-	kafka "github.com/Konscig/foodelivery-pet/internal/bootstrap/"
-	deliveryApp "github.com/Konscig/foodelivery-pet/internal/services/delivery/app"
-	redisClient "github.com/Konscig/foodelivery-pet/internal/services/delivery/redis"
-	"github.com/joho/godotenv"
+	"github.com/Konscig/foodelivery-pet/config"
+	"github.com/Konscig/foodelivery-pet/internal/bootstrap"
+	deliveryapp "github.com/Konscig/foodelivery-pet/internal/services/delivery/app"
+	"google.golang.org/grpc"
 )
 
 func main() {
-	godotenv.Load(".env")
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatalf("failed to load config: %v", err)
+	}
 
-	redis := redisClient.New(os.Getenv("REDIS_ADDR"))
+	producer := bootstrap.NewProducer(cfg)
+	consumer := bootstrap.NewConsumer(cfg, "delivery-group", bootstrap.TopicOrderReady)
+	redis := bootstrap.NewRedis(cfg)
 
-	kafkaConsumer := kafka.NewConsumer(
-		[]string{os.Getenv("KAFKA_BROKER")},
-		kafka.TopicOrderReady, // слушаем order.ready
-		"delivery-group",
-	)
+	publisher := deliveryapp.NewPublisher(producer)
+	deliveryConsumer := deliveryapp.NewConsumer(consumer, redis, publisher)
 
-	kafkaProducer := kafka.NewProducer(
-		[]string{os.Getenv("KAFKA_BROKER")},
-	)
-
-	publisher := deliveryApp.NewPublisher(kafkaProducer)
-
-	deliveryConsumer := deliveryApp.NewConsumer(
-		kafkaConsumer,
-		redis,
-		publisher,
-	)
-
-	log.Println("delivery service started")
-
-	deliveryConsumer.Start(context.Background())
+	// Запуск gRPC сервера и регистрация gRPC-сервиса доставки
+	bootstrap.StartGRPCServer(cfg.GRPC.DeliveryPort, func(s *grpc.Server) {
+		// TODO: Зарегистрировать gRPC-сервис доставки, например:
+		// orderpb.RegisterDeliveryServiceServer(s, deliveryConsumer)
+	})
 }

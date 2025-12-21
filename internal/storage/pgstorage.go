@@ -12,7 +12,7 @@ type PGstorage struct {
 	db *pgxpool.Pool
 }
 
-func NewPGStorge(connString string) (Storage, error) {
+func NewPGStorage(connString string) (Storage, error) {
 
 	config, err := pgxpool.ParseConfig(connString)
 	if err != nil {
@@ -67,6 +67,7 @@ func (s *PGstorage) initTables() error {
 	return nil
 }
 
+// убрать
 type GormReviewRepository struct {
 	db *gorm.DB
 }

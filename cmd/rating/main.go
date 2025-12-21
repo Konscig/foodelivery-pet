@@ -5,36 +5,29 @@ import (
 
 	"github.com/Konscig/foodelivery-pet/config"
 	"github.com/Konscig/foodelivery-pet/internal/bootstrap"
-	redisClient "github.com/Konscig/foodelivery-pet/internal/services/rating/redis"
+	ratingapp "github.com/Konscig/foodelivery-pet/internal/services/rating/app"
+	"github.com/Konscig/foodelivery-pet/internal/services/rating/models"
+	"google.golang.org/grpc"
 )
 
 func main() {
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to load config: %v", err)
 	}
 
-	redis, err := redisClient.NewRedisClient(cfg.Redis)
-	if err != nil {
-		log.Fatal(err)
-	}
+	producer := bootstrap.NewProducer(cfg)
+	consumer := bootstrap.NewConsumer(cfg, "rating-group", bootstrap.TopicOrderRated)
+	redis := bootstrap.NewRedis(cfg)
+	pg := bootstrap.InitPGStorage(cfg)
 
-	db, err := internal.NewDB(cfg.Database)
-	if err != nil {
-		log.Fatal(err)
-	}
+	stat := models.NewStat()
+	publisher := ratingapp.NewPublisher(producer)
+	ratingConsumer := ratingapp.NewConsumer(consumer, redis, pg, publisher, stat)
 
-	kafkaProducer, err := bootstrap.NewProducer(cfg.Kafka)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	kafkaConsumer, err := bootstrap.NewConsumer(cfg.Kafka)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	ratingApp := bootstrap.NewRatingApp(redis, db, kafkaProducer, kafkaConsumer, models.NewStat())
-
-	ratingApp.Start()
+	// Запуск gRPC сервера и регистрация gRPC-сервиса рейтинга
+	bootstrap.StartGRPCServer(cfg.GRPC.RatingPort, func(s *grpc.Server) {
+		// TODO: Зарегистрировать gRPC-сервис рейтинга, например:
+		// orderpb.RegisterRatingServiceServer(s, ratingConsumer)
+	})
 }

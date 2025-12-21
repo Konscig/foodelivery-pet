@@ -3,6 +3,7 @@ package bootstrap
 import (
 	"context"
 
+	"github.com/Konscig/foodelivery-pet/config"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -11,9 +12,9 @@ type RedisClient struct {
 	Ctx    context.Context
 }
 
-func NewRedis(addr string) *RedisClient {
+func NewRedis(cfg *config.Config) *RedisClient {
 	rdb := redis.NewClient(&redis.Options{
-		Addr: addr,
+		Addr: cfg.Redis.Host + ":" + cfg.Redis.Port,
 	})
 	return &RedisClient{
 		Client: rdb,

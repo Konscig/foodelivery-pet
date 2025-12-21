@@ -8,8 +8,9 @@ import (
 	"strings"
 	"time"
 
-	eventspb "github.com/Konscig/foodelivery-pet/generated/eventspb"
+	"github.com/Konscig/foodelivery-pet/config"
 	kafka "github.com/Konscig/foodelivery-pet/internal/bootstrap"
+	eventspb "github.com/Konscig/foodelivery-pet/internal/pb/eventspb"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/proto"
 )
@@ -28,7 +29,7 @@ func main() {
 	brokers := strings.Split(*brokersFlag, ",")
 	log.Printf("mockify: brokers=%v topic=%s count=%d interval=%dms", brokers, *topic, *count, *interval)
 
-	prod := kafka.NewProducer(brokers)
+	prod := kafka.NewProducer(config.Config.Kafka.Broker)
 	defer prod.Close()
 
 	// Простая генерация мок-заказов прямо в этом файле, чтобы не держать отдельный internal-пакет.

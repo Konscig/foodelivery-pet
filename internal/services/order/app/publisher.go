@@ -9,8 +9,6 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// PublishOrderCreated публикует событие создания заказа в Kafka.
-// TODO: заменить параметры на актуальные для вашего order-объекта.
 func PublishOrderCreated(publish func([]byte) error, orderID, userID, restID string, items []string) error {
 	pbItems := make([]*eventspb.OrderItem, len(items))
 	for i, name := range items {
@@ -41,6 +39,5 @@ func PublishOrderCreated(publish func([]byte) error, orderID, userID, restID str
 		log.Printf("failed to marshal event: %v", err)
 		return err
 	}
-	// publish — функция, отправляющая байты в Kafka (например, producer.Publish)
 	return publish(eventBytes)
 }

@@ -6,7 +6,7 @@ import (
 
 	"github.com/Konscig/foodelivery-pet/internal/bootstrap"
 	eventspb "github.com/Konscig/foodelivery-pet/internal/pb/eventspb"
-	"github.com/Konscig/foodelivery-pet/internal/storage"
+	models "github.com/Konscig/foodelivery-pet/internal/storage/models"
 	"google.golang.org/protobuf/proto"
 	"gorm.io/gorm"
 )
@@ -17,7 +17,7 @@ type Consumer struct {
 }
 
 func NewConsumer(c *bootstrap.Consumer, db *gorm.DB) *Consumer {
-	repo := storage.NewGormReviewRepository(db)
+	repo := models.NewReviewRepository(db)
 	service := NewService(repo)
 	return &Consumer{
 		consumer: c,
@@ -49,7 +49,7 @@ func (c *Consumer) Start(ctx context.Context) {
 
 		err = c.service.AddReview(
 			event.OrderId,
-			payload.RestaurantID,
+			payload.RestaurantId,
 			payload.Rating,
 			payload.Comment,
 		)

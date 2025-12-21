@@ -10,14 +10,7 @@ type OrderService struct {
 	kafkaProducer *Producer
 }
 
-func NewOrderService() *OrderService {
-	return &OrderService{
-		kafkaConsumer: NewConsumer([]string{"localhost:9092"}, "order.created", "order-group"),
-		kafkaProducer: NewProducer([]string{"localhost:9092"}),
-	}
-}
-
-func (s *OrderService) Start() error {
+func (s *OrderService) StartOrderService() error {
 	log.Println("Запуск сервиса Order")
 	ctx := context.Background()
 	for {
