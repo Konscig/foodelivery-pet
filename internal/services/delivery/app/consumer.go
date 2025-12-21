@@ -8,21 +8,20 @@ import (
 	"log"
 	"time"
 
-	"github.com/Konscig/foodelivery-pet/api/kafka"
-	eventspb "github.com/Konscig/foodelivery-pet/generated/eventspb"
 	"github.com/Konscig/foodelivery-pet/internal/bootstrap"
+	eventspb "github.com/Konscig/foodelivery-pet/internal/pb/eventspb"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/proto"
 )
 
 type Consumer struct {
-	kafkaConsumer *kafka.Consumer
+	kafkaConsumer *Consumer
 	redis         *bootstrap.RedisClient
 	publisher     *Publisher
 }
 
 func NewConsumer(
-	kafkaConsumer *kafka.Consumer,
+	kafkaConsumer *Consumer,
 	redis *bootstrap.RedisClient,
 	publisher *Publisher,
 ) *Consumer {

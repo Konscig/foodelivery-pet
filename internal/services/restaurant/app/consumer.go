@@ -5,9 +5,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/Konscig/foodelivery-pet/api/kafka"
-	eventspb "github.com/Konscig/foodelivery-pet/generated/eventspb"
 	"github.com/Konscig/foodelivery-pet/internal/bootstrap"
+	eventspb "github.com/Konscig/foodelivery-pet/internal/pb/eventspb"
 	"github.com/Konscig/foodelivery-pet/internal/services/restaurant/internal/models"
 	"google.golang.org/protobuf/proto"
 	"gorm.io/gorm"

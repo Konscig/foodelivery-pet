@@ -4,8 +4,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/Konscig/foodelivery-pet/api/kafka"
-	eventspb "github.com/Konscig/foodelivery-pet/generated/eventspb"
+	eventspb "github.com/Konscig/foodelivery-pet/internal/pb/eventspb"
 	"google.golang.org/protobuf/proto"
 )
 
