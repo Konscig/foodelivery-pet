@@ -140,5 +140,19 @@ services:
       kafka:
         condition: service_healthy
 
+  mockify:
+    build:
+      context: .
+      dockerfile: ./mockify.Dockerfile
+    container_name: fd-mockify
+    environment:
+      BROKERS: "fd-kafka:9092"
+      TOPIC: "order.created"
+      COUNT: "5"
+      INTERVAL: "500"
+    depends_on:
+      - kafka
+    restart: "no"
+
 volumes:
   pgdata:

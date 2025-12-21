@@ -7,7 +7,7 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o mock ./cmd/mockify
+RUN go build -o mock ./utils/mockify
 
 RUN chmod +x mock
 
