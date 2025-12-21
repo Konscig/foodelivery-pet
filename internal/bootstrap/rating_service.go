@@ -6,8 +6,8 @@ import (
 )
 
 type RatingService struct {
-	kafkaConsumer *Consumer
-	kafkaProducer *Producer
+	kafkaConsumer EventConsumer
+	kafkaProducer EventProducer
 }
 
 func StartRatingService(s *RatingService) error {

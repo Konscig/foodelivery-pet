@@ -1,0 +1,8 @@
+akhq:
+  server:
+    base-path: /
+    port: 8085
+  connections:
+    kafka:
+      properties:
+        bootstrap.servers: "fd-kafka:9092"

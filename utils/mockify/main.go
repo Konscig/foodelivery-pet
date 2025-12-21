@@ -29,7 +29,8 @@ func main() {
 	brokers := strings.Split(*brokersFlag, ",")
 	log.Printf("mockify: brokers=%v topic=%s count=%d interval=%dms", brokers, *topic, *count, *interval)
 
-	prod := kafka.NewProducer(config.Config.Kafka.Broker)
+	cfg, _ := config.Load()
+	prod := kafka.NewProducer(cfg)
 	defer prod.Close()
 
 	// Простая генерация мок-заказов прямо в этом файле, чтобы не держать отдельный internal-пакет.
@@ -54,7 +55,7 @@ func main() {
 			Payload:   payloadBytes,
 		}
 		eventBytes, _ := proto.Marshal(event)
-		if err := prod.SendProtoMessage(kafka.TopicOrderCreated, eventBytes); err != nil {
+		if err := prod.SendProtoMessage(kafka.TopicOrderCreated, []byte(order.ID), eventBytes); err != nil {
 			log.Printf("failed to publish: %v", err)
 		} else {
 			fmt.Printf("published mock order %s\n", order.ID)
@@ -63,7 +64,6 @@ func main() {
 	}
 }
 
-// GenerateOrder создает случайный заказ.
 func GenerateOrder(useStatus bool) Order {
 	id := uuid.NewString()
 	customer := fmt.Sprintf("cust-%d", rand.Intn(1000))

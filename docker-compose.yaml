@@ -32,13 +32,26 @@ services:
       start_period: 10s
 
   akhq:
-    image: tchiotludo/akhq:0.24.0
-    depends_on:
-      - kafka
+    image: tchiotludo/akhq
+    container_name: fd-kafka-ui
+    restart: unless-stopped
+    environment:
+      AKHQ_CONFIGURATION: |
+        akhq:
+          connections:
+            docker-kafka-server:
+              properties:
+                bootstrap.servers: "fd-kafka:9092"
+              schema-registry:
+                url: "http://schema-registry:8085"
+              connect:
+                - name: "connect"
+                  url: "http://connect:8083"
+
     ports:
-      - "8085:8085"
-    volumes:
-      - ./akhq/application.yml:/app/application.yml
+      - 8080:8080
+    links:
+      - kafka
 
   redis:
     image: redis:7
@@ -92,11 +105,13 @@ services:
     env_file:
       - .env
     ports:
-      - "8080:8080"
+      - "8088:8088"
     depends_on:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
 
   delivery:
