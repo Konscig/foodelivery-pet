@@ -10,22 +10,22 @@ DELIVERY_DIR=internal/services/delivery
 .PHONY: build up down logs clean
 
 gen:
-	cd .. && mkdir -p $(OUT_DIR)/orderpb
-	cd .. && mkdir -p $(OUT_DIR)/eventspb
-	cd .. && protoc -I=$(PROTO_DIR) \
+	mkdir -p $(OUT_DIR)/orderpb
+	mkdir -p $(OUT_DIR)/eventspb
+	protoc -I=$(PROTO_DIR) \
 		--go_out=paths=source_relative:$(OUT_DIR)/orderpb \
 		--go-grpc_out=paths=source_relative:$(OUT_DIR)/orderpb \
 		$(PROTO_DIR)/order_models.proto \
 		$(PROTO_DIR)/order_service.proto
-	cd .. && protoc -I=$(PROTO_DIR) \
+	protoc -I=$(PROTO_DIR) \
 		--go_out=paths=source_relative:$(OUT_DIR)/eventspb \
 		--go-grpc_out=paths=source_relative:$(OUT_DIR)/eventspb \
 		$(PROTO_DIR)/order_events.proto
 
 build:
-	docker build -t fd-order -f services/order/Dockerfile .
-	docker build -t fd-restaurant -f services/restaurant/Dockerfile .
-	docker build -t fd-delivery -f services/delivery/Dockerfile .
+	docker build -t fd-order -f internal/services/order/Dockerfile .
+	docker build -t fd-restaurant -f internal/services/restaurant/Dockerfile .
+	docker build -t fd-delivery -f internal/services/delivery/Dockerfile .
 
 up:
 	$(COMPOSE) up -d
