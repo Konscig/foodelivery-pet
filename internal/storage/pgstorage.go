@@ -5,6 +5,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/pkg/errors"
+	"gorm.io/gorm"
 )
 
 type PGstorage struct {
@@ -64,4 +65,12 @@ func (s *PGstorage) initTables() error {
 	}
 
 	return nil
+}
+
+type GormReviewRepository struct {
+	db *gorm.DB
+}
+
+func NewGormReviewRepository(db *gorm.DB) *GormReviewRepository {
+	return &GormReviewRepository{db: db}
 }

@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Konscig/foodelivery-pet/api/kafka"
 	eventspb "github.com/Konscig/foodelivery-pet/generated/eventspb"
+	kafka "github.com/Konscig/foodelivery-pet/internal/bootstrap"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/proto"
 )

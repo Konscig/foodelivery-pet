@@ -21,3 +21,11 @@ func (s *PGstorage) AddDelivery(delivery *models.Delivery) error {
 	`, delivery.ID, delivery.OrderID, delivery.CourierID, delivery.Status)
 	return err
 }
+
+func (s *PGstorage) AddReview(review *models.Review) error {
+	_, err := s.db.Exec(context.Background(), `
+		INSERT INTO reviews (id, order_id, restaurant_id, rating, comment)
+		VALUES ($1, $2, $3, $4, $5)
+	`, review.ID, review.OrderID, review.RestaurantID, review.Rating, review.Comment)
+	return err
+}

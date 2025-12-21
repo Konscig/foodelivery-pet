@@ -39,3 +39,40 @@ type OrderItem struct {
 	Price    string
 	Quantity int64
 }
+
+type Review struct {
+	gorm.Model
+	ID           string `gorm:"primaryKey"`
+	OrderID      string
+	RestaurantID string
+	Rating       int32
+	Comment      string
+}
+
+type ReviewRepository interface {
+	CreateReview(review *Review) error
+}
+
+type GormReviewRepository struct {
+	db *gorm.DB
+}
+
+func NewGormReviewRepository(db *gorm.DB) *GormReviewRepository {
+	return &GormReviewRepository{db: db}
+}
+
+func (r *GormReviewRepository) CreateReview(review *Review) error {
+	return r.db.Create(review).Error
+}
+
+type RestaurantStats struct {
+	RestaurantID  string
+	AvgRating     float64
+	ReviewsCount  uint32
+	WordCloudJSON string
+}
+
+func BuildWordCloud(input string) map[string]int {
+	// Placeholder implementation
+	return map[string]int{"example": 1}
+}

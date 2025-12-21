@@ -44,3 +44,11 @@ func (p *Producer) SendProtoMessage(topic string, value []byte) error {
 func (p *Producer) Close() error {
 	return p.writer.Close()
 }
+
+func (c *Consumer) ReadMessage(ctx context.Context) (kafka.Message, error) {
+	return c.reader.ReadMessage(ctx)
+}
+
+func (c *Consumer) Close() error {
+	return c.reader.Close()
+}

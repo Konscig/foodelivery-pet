@@ -3,19 +3,17 @@ package bootstrap
 import (
 	"context"
 	"log"
-
-	"github.com/Konscig/foodelivery-pet/internal/common"
 )
 
 type OrderService struct {
-	kafkaConsumer *common.Consumer
-	kafkaProducer *common.Producer
+	kafkaConsumer *Consumer
+	kafkaProducer *Producer
 }
 
 func NewOrderService() *OrderService {
 	return &OrderService{
-		kafkaConsumer: common.NewConsumer([]string{"localhost:9092"}, "order.created", "order-group"),
-		kafkaProducer: common.NewProducer([]string{"localhost:9092"}),
+		kafkaConsumer: NewConsumer([]string{"localhost:9092"}, "order.created", "order-group"),
+		kafkaProducer: NewProducer([]string{"localhost:9092"}),
 	}
 }
 

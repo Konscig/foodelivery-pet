@@ -11,13 +11,20 @@ type RedisClient struct {
 	Ctx    context.Context
 }
 
-func InitRedis(addr string) *RedisClient {
+func NewRedis(addr string) *RedisClient {
 	rdb := redis.NewClient(&redis.Options{
 		Addr: addr,
 	})
-
 	return &RedisClient{
 		Client: rdb,
 		Ctx:    context.Background(),
 	}
+}
+
+func (r *RedisClient) SetOrderStatus(orderID string, status string) error {
+	return r.Client.Set(r.Ctx, "order:"+orderID+":status", status, 0).Err()
+}
+
+func (r *RedisClient) GetOrderStatus(orderID string) (string, error) {
+	return r.Client.Get(r.Ctx, "order:"+orderID+":status").Result()
 }

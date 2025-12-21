@@ -13,14 +13,14 @@ import (
 )
 
 type Consumer struct {
-	kafkaConsumer *kafka.Consumer
+	kafkaConsumer *bootstrap.Consumer
 	db            *gorm.DB
 	redis         *bootstrap.RedisClient
 	publisher     *Publisher
 }
 
 func NewConsumer(
-	kafkaConsumer *kafka.Consumer,
+	kafkaConsumer *bootstrap.Consumer,
 	db *gorm.DB,
 	redis *bootstrap.RedisClient,
 	publisher *Publisher,
@@ -75,7 +75,7 @@ func (c *Consumer) Start(ctx context.Context) {
 		}
 
 		// Сохраняем статус в Redis
-		c.redis.Set("order:"+order.ID+":status", "READY")
+		c.redis.SetOrderStatus("order:"+order.ID+":status", "READY")
 
 		// Публикуем order.ready
 		if err := c.publisher.PublishOrderReady(order.ID, order.RestID); err != nil {

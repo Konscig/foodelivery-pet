@@ -400,6 +400,7 @@ type OrderRatedPayload struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Rating        uint32                 `protobuf:"varint,1,opt,name=rating,proto3" json:"rating,omitempty"`
 	Comment       string                 `protobuf:"bytes,2,opt,name=comment,proto3" json:"comment,omitempty"`
+	RestaurantId  string                 `protobuf:"bytes,3,opt,name=restaurant_id,json=restaurantId,proto3" json:"restaurant_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -448,6 +449,13 @@ func (x *OrderRatedPayload) GetComment() string {
 	return ""
 }
 
+func (x *OrderRatedPayload) GetRestaurantId() string {
+	if x != nil {
+		return x.RestaurantId
+	}
+	return ""
+}
+
 var File_order_events_proto protoreflect.FileDescriptor
 
 const file_order_events_proto_rawDesc = "" +
@@ -474,10 +482,11 @@ const file_order_events_proto_rawDesc = "" +
 	"courier_id\x18\x01 \x01(\tR\tcourierId\"1\n" +
 	"\x10OrderDonePayload\x12\x1d\n" +
 	"\n" +
-	"courier_id\x18\x01 \x01(\tR\tcourierId\"E\n" +
+	"courier_id\x18\x01 \x01(\tR\tcourierId\"j\n" +
 	"\x11OrderRatedPayload\x12\x16\n" +
 	"\x06rating\x18\x01 \x01(\rR\x06rating\x12\x18\n" +
-	"\acomment\x18\x02 \x01(\tR\acomment*F\n" +
+	"\acomment\x18\x02 \x01(\tR\acomment\x12#\n" +
+	"\rrestaurant_id\x18\x03 \x01(\tR\frestaurantId*F\n" +
 	"\vOrderStatus\x12\v\n" +
 	"\aCREATED\x10\x00\x12\t\n" +
 	"\x05READY\x10\x01\x12\n" +

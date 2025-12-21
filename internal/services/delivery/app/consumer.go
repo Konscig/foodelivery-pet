@@ -15,13 +15,13 @@ import (
 )
 
 type Consumer struct {
-	kafkaConsumer *Consumer
+	kafkaConsumer *bootstrap.Consumer
 	redis         *bootstrap.RedisClient
 	publisher     *Publisher
 }
 
 func NewConsumer(
-	kafkaConsumer *Consumer,
+	kafkaConsumer *bootstrap.Consumer,
 	redis *bootstrap.RedisClient,
 	publisher *Publisher,
 ) *Consumer {
@@ -34,7 +34,7 @@ func NewConsumer(
 
 func (c *Consumer) Start(ctx context.Context) {
 	for {
-		msg, err := c.kafkaConsumer.Reader.ReadMessage(ctx)
+		msg, err := c.kafkaConsumer.ReadMessage(ctx)
 		if err != nil {
 			log.Println("kafka read error:", err)
 			continue
@@ -46,7 +46,6 @@ func (c *Consumer) Start(ctx context.Context) {
 			continue
 		}
 
-		// Интересует только READY
 		if event.Status != eventspb.OrderStatus_READY {
 			continue
 		}
@@ -60,21 +59,17 @@ func (c *Consumer) Start(ctx context.Context) {
 		courierID := uuid.NewString()
 		log.Printf("🚴 courier %s assigned to order %s\n", courierID, event.OrderId)
 
-		// Сохраняем статус в Redis
-		_ = c.redis.Set("order:"+event.OrderId+":status", "COMING")
+		_ = c.redis.SetOrderStatus("order:"+event.OrderId+":status", "COMING")
 
-		// Публикуем order.coming
 		if err := c.publisher.PublishOrderComing(event.OrderId, courierID); err != nil {
 			log.Println("publish coming error:", err)
 			continue
 		}
 
-		time.Sleep(3 * time.Second) // имитация доставки
+		time.Sleep(3 * time.Second)
 
-		// Обновляем статус
-		_ = c.redis.Set("order:"+event.OrderId+":status", "DONE")
+		_ = c.redis.SetOrderStatus("order:"+event.OrderId+":status", "DONE")
 
-		// Публикуем order.done
 		if err := c.publisher.PublishOrderDone(event.OrderId, courierID); err != nil {
 			log.Println("publish done error:", err)
 			continue

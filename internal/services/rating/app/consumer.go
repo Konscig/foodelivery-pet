@@ -4,25 +4,30 @@ import (
 	"context"
 	"log"
 
+	"github.com/Konscig/foodelivery-pet/internal/bootstrap"
 	eventspb "github.com/Konscig/foodelivery-pet/internal/pb/eventspb"
+	"github.com/Konscig/foodelivery-pet/internal/storage"
 	"google.golang.org/protobuf/proto"
+	"gorm.io/gorm"
 )
 
 type Consumer struct {
-	consumer *kafka.Consumer
+	consumer *bootstrap.Consumer
 	service  *Service
 }
 
-func NewConsumer(c *kafka.Consumer, s *Service) *Consumer {
+func NewConsumer(c *bootstrap.Consumer, db *gorm.DB) *Consumer {
+	repo := storage.NewGormReviewRepository(db)
+	service := NewService(repo)
 	return &Consumer{
 		consumer: c,
-		service:  s,
+		service:  service,
 	}
 }
 
 func (c *Consumer) Start(ctx context.Context) {
 	for {
-		msg, err := c.consumer.Reader.ReadMessage(ctx)
+		msg, err := c.consumer.ReadMessage(ctx)
 		if err != nil {
 			log.Println("kafka read error:", err)
 			continue
@@ -44,7 +49,7 @@ func (c *Consumer) Start(ctx context.Context) {
 
 		err = c.service.AddReview(
 			event.OrderId,
-			payload.RestaurantId,
+			payload.RestaurantID,
 			payload.Rating,
 			payload.Comment,
 		)
