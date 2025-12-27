@@ -39,7 +39,6 @@ func (s *Service) CreateOrder(
 		return nil, err
 	}
 
-	// Опубликовать событие
 	items := make([]string, len(req.Items))
 	for i, item := range req.Items {
 		items[i] = item.Name

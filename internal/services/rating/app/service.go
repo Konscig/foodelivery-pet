@@ -5,7 +5,6 @@ import (
 	models "github.com/Konscig/foodelivery-pet/internal/storage/models"
 )
 
-// Refactored Service to use a repository for database operations
 type Service struct {
 	repo storage.ReviewRepository
 }
@@ -19,7 +18,7 @@ func (s *Service) AddReview(orderID, restaurantID string, rating uint32, comment
 		ID:           orderID,
 		OrderID:      orderID,
 		RestaurantID: restaurantID,
-		Rating:       int32(rating), // Adjusted type
+		Rating:       int32(rating),
 		Comment:      comment,
 	}
 
