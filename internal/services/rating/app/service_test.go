@@ -1,95 +1,31 @@
-package app_test
+package app
 
 import (
 	"errors"
-	"math/rand"
 	"testing"
-	"time"
 
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
 
-	"github.com/Konscig/foodelivery-pet/internal/services/rating/app"
+	"github.com/Konscig/foodelivery-pet/internal/services/rating/app/mocks"
 	models "github.com/Konscig/foodelivery-pet/internal/storage/models"
 )
 
-type ReviewRepoMock struct {
-	mock.Mock
-	t *testing.T
+type ReviewServiceSuite struct {
+	suite.Suite
+	repo *mocks.ReviewRepoMock
+	svc  *Service
 }
 
-func NewReviewRepoMock(t *testing.T) *ReviewRepoMock {
-	return &ReviewRepoMock{t: t}
+func (s *ReviewServiceSuite) SetupTest() {
+	s.repo = mocks.NewReviewRepoMock(s.T())
+	s.svc = NewService(s.repo)
 }
 
-func (m *ReviewRepoMock) CreateReview(review *models.Review) error {
-	m.t.Logf(
-		"мок отзыва CreateReview orderID=%s restaurantID=%s rating=%d comment=%q",
-		review.OrderID,
-		review.RestaurantID,
-		review.Rating,
-		review.Comment,
-	)
-	args := m.Called(review)
-	return args.Error(0)
-}
+func (s *ReviewServiceSuite) TestAddReview_Success() {
+	data := mocks.GenerateReviewData(s.T())
 
-func (m *ReviewRepoMock) UpdateRestaurantStats(restaurantID string) error {
-	m.t.Logf(
-		"мок отзыва UpdateRestaurantStats restaurantID=%s",
-		restaurantID,
-	)
-	args := m.Called(restaurantID)
-	return args.Error(0)
-}
-
-func (m *ReviewRepoMock) GetRestaurantStats(restaurantID string) (*models.RestaurantStats, error) {
-	m.t.Logf(
-		"мок отзывов по ресторану GetRestaurantStats restaurantID=%s",
-		restaurantID,
-	)
-	args := m.Called(restaurantID)
-	return args.Get(0).(*models.RestaurantStats), args.Error(1)
-}
-
-type reviewTestData struct {
-	OrderID      string
-	RestaurantID string
-	Rating       uint32
-	Comment      string
-}
-
-func generateReviewData(t *testing.T) reviewTestData {
-	rand.Seed(time.Now().UnixNano())
-
-	rating := uint32(rand.Intn(5) + 1)
-
-	data := reviewTestData{
-		OrderID:      "order-" + uuid.NewString(),
-		RestaurantID: "rest-" + uuid.NewString(),
-		Rating:       rating,
-		Comment:      "comment-" + uuid.NewString()[:8],
-	}
-
-	t.Logf(
-		"данные для теста отзыва orderID=%s restaurantID=%s rating=%d comment=%q",
-		data.OrderID,
-		data.RestaurantID,
-		data.Rating,
-		data.Comment,
-	)
-
-	return data
-}
-
-func TestAddReview_Success(t *testing.T) {
-	repo := NewReviewRepoMock(t)
-	service := app.NewService(repo)
-
-	data := generateReviewData(t)
-
-	repo.
+	s.repo.
 		On(
 			"CreateReview",
 			mock.MatchedBy(func(r *models.Review) bool {
@@ -102,7 +38,7 @@ func TestAddReview_Success(t *testing.T) {
 		Return(nil).
 		Once()
 
-	repo.
+	s.repo.
 		On(
 			"UpdateRestaurantStats",
 			data.RestaurantID,
@@ -110,27 +46,21 @@ func TestAddReview_Success(t *testing.T) {
 		Return(nil).
 		Once()
 
-	err := service.AddReview(
+	err := s.svc.AddReview(
 		data.OrderID,
 		data.RestaurantID,
 		data.Rating,
 		data.Comment,
 	)
 
-	t.Logf("результат теста err=%v", err)
-
-	assert.NoError(t, err)
-
-	repo.AssertExpectations(t)
+	s.NoError(err)
+	s.repo.AssertExpectations(s.T())
 }
 
-func TestAddReview_CreateReviewError(t *testing.T) {
-	repo := NewReviewRepoMock(t)
-	service := app.NewService(repo)
+func (s *ReviewServiceSuite) TestAddReview_CreateReviewError() {
+	data := mocks.GenerateReviewData(s.T())
 
-	data := generateReviewData(t)
-
-	repo.
+	s.repo.
 		On(
 			"CreateReview",
 			mock.Anything,
@@ -138,27 +68,21 @@ func TestAddReview_CreateReviewError(t *testing.T) {
 		Return(errors.New("failed to create review")).
 		Once()
 
-	err := service.AddReview(
+	err := s.svc.AddReview(
 		data.OrderID,
 		data.RestaurantID,
 		data.Rating,
 		data.Comment,
 	)
 
-	t.Logf("ошибка теста err=%v", err)
-
-	assert.Error(t, err)
-
-	repo.AssertExpectations(t)
+	s.Error(err)
+	s.repo.AssertExpectations(s.T())
 }
 
-func TestAddReview_UpdateStatsError(t *testing.T) {
-	repo := NewReviewRepoMock(t)
-	service := app.NewService(repo)
+func (s *ReviewServiceSuite) TestAddReview_UpdateStatsError() {
+	data := mocks.GenerateReviewData(s.T())
 
-	data := generateReviewData(t)
-
-	repo.
+	s.repo.
 		On(
 			"CreateReview",
 			mock.Anything,
@@ -166,7 +90,7 @@ func TestAddReview_UpdateStatsError(t *testing.T) {
 		Return(nil).
 		Once()
 
-	repo.
+	s.repo.
 		On(
 			"UpdateRestaurantStats",
 			data.RestaurantID,
@@ -174,16 +98,17 @@ func TestAddReview_UpdateStatsError(t *testing.T) {
 		Return(errors.New("failed to update stats")).
 		Once()
 
-	err := service.AddReview(
+	err := s.svc.AddReview(
 		data.OrderID,
 		data.RestaurantID,
 		data.Rating,
 		data.Comment,
 	)
 
-	t.Logf("ошибка теста err=%v", err)
+	s.Error(err)
+	s.repo.AssertExpectations(s.T())
+}
 
-	assert.Error(t, err)
-
-	repo.AssertExpectations(t)
+func TestReviewServiceSuite(t *testing.T) {
+	suite.Run(t, new(ReviewServiceSuite))
 }

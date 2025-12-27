@@ -1,98 +1,47 @@
-package app_test
+package app
 
 import (
 	"context"
-	"math/rand"
 	"testing"
-	"time"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
 
-	orderpb "github.com/Konscig/foodelivery-pet/internal/pb/orderpb"
-	"github.com/Konscig/foodelivery-pet/internal/services/order/app"
+	"github.com/Konscig/foodelivery-pet/internal/services/order/app/mocks"
 )
 
-type RedisMock struct {
-	mock.Mock
-	t *testing.T
+type OrderServiceSuite struct {
+	suite.Suite
+	redis     *mocks.RedisMock
+	publisher *mocks.PublisherMock
+	svc       *Service
 }
 
-func NewRedisMock(t *testing.T) *RedisMock {
-	return &RedisMock{t: t}
+func (s *OrderServiceSuite) SetupTest() {
+	s.redis = mocks.NewRedisMock(s.T())
+	s.publisher = mocks.NewPublisherMock(s.T())
+	s.svc = NewService(s.redis, s.publisher)
 }
 
-func (m *RedisMock) SetOrderStatus(key, status string) error {
-	m.t.Logf("мок редис статуса SetOrderStatus key=%s status=%s", key, status)
-	args := m.Called(key, status)
-	return args.Error(0)
-}
-
-type PublisherMock struct {
-	mock.Mock
-	t *testing.T
-}
-
-func NewPublisherMock(t *testing.T) *PublisherMock {
-	return &PublisherMock{t: t}
-}
-
-func (m *PublisherMock) PublishOrderCreated(
-	orderID, userID, restID string,
-	items []string,
-) error {
-	m.t.Logf(
-		"мок кафка паблишера PublishOrderCreated orderID=%s userID=%s restID=%s items=%v",
-		orderID, userID, restID, items,
-	)
-	args := m.Called(orderID, userID, restID, items)
-	return args.Error(0)
-}
-
-func generateCreateOrderRequest(t *testing.T) *orderpb.CreateOrderRequest {
-	rand.Seed(time.Now().UnixNano())
-
-	n := rand.Intn(4) + 1
-	items := make([]*orderpb.OrderItem, n)
-	names := make([]string, 0, n)
-
-	for i := 0; i < n; i++ {
-		name := "item-" + uuid.NewString()[:6]
-		items[i] = &orderpb.OrderItem{Name: name}
-		names = append(names, name)
-	}
-
-	req := &orderpb.CreateOrderRequest{
-		UserId: "user-" + uuid.NewString(),
-		RestId: "rest-" + uuid.NewString(),
-		Items:  items,
-	}
-
-	t.Logf(
-		"мокнутые данные user=%s rest=%s items=%v",
-		req.UserId,
-		req.RestId,
-		names,
-	)
-
-	return req
-}
-
-func TestCreateOrder_Success(t *testing.T) {
-	redis := NewRedisMock(t)
-	publisher := NewPublisherMock(t)
-
-	service := app.NewService(redis, publisher)
-
-	req := generateCreateOrderRequest(t)
+func (s *OrderServiceSuite) TestCreateOrder_Success() {
+	req := mocks.GenerateCreateOrderRequest(s.T())
 
 	expectedItems := make([]string, 0, len(req.Items))
 	for _, it := range req.Items {
 		expectedItems = append(expectedItems, it.Name)
 	}
 
-	publisher.
+	s.redis.
+		On(
+			"SetOrderStatus",
+			mock.Anything,
+			"CREATED",
+		).
+		Return(nil).
+		Once()
+
+	s.publisher.
 		On(
 			"PublishOrderCreated",
 			mock.Anything,
@@ -103,40 +52,25 @@ func TestCreateOrder_Success(t *testing.T) {
 		Return(nil).
 		Once()
 
-	redis.
-		On(
-			"SetOrderStatus",
-			mock.Anything,
-			"CREATED",
-		).
-		Return(nil).
-		Once()
+	resp, err := s.svc.CreateOrder(context.Background(), req)
 
-	resp, err := service.CreateOrder(context.Background(), req)
+	s.NoError(err)
+	s.NotNil(resp)
+	s.NotEmpty(resp.OrderId)
 
-	t.Logf("результат теста resp=%+v err=%v", resp, err)
-
-	assert.NoError(t, err)
-	assert.NotNil(t, resp)
-	assert.NotEmpty(t, resp.OrderId)
-
-	publisher.AssertExpectations(t)
-	redis.AssertExpectations(t)
+	s.redis.AssertExpectations(s.T())
+	s.publisher.AssertExpectations(s.T())
 }
 
-func TestCreateOrder_PublisherError(t *testing.T) {
-	redis := NewRedisMock(t)
-	publisher := NewPublisherMock(t)
-
-	service := app.NewService(redis, publisher)
-
-	req := generateCreateOrderRequest(t)
+func (s *OrderServiceSuite) TestCreateOrder_PublisherError() {
+	req := mocks.GenerateCreateOrderRequest(s.T())
 
 	expectedItems := make([]string, 0, len(req.Items))
 	for _, it := range req.Items {
 		expectedItems = append(expectedItems, it.Name)
 	}
-	redis.
+
+	s.redis.
 		On(
 			"SetOrderStatus",
 			mock.Anything,
@@ -145,7 +79,7 @@ func TestCreateOrder_PublisherError(t *testing.T) {
 		Return(nil).
 		Once()
 
-	publisher.
+	s.publisher.
 		On(
 			"PublishOrderCreated",
 			mock.Anything,
@@ -156,13 +90,15 @@ func TestCreateOrder_PublisherError(t *testing.T) {
 		Return(assert.AnError).
 		Once()
 
-	resp, err := service.CreateOrder(context.Background(), req)
+	resp, err := s.svc.CreateOrder(context.Background(), req)
 
-	t.Logf("ошибка теста resp=%+v err=%v", resp, err)
+	s.Error(err)
+	s.Nil(resp)
 
-	assert.Error(t, err)
-	assert.Nil(t, resp)
+	s.redis.AssertExpectations(s.T())
+	s.publisher.AssertExpectations(s.T())
+}
 
-	redis.AssertExpectations(t)
-	publisher.AssertExpectations(t)
+func TestOrderServiceSuite(t *testing.T) {
+	suite.Run(t, new(OrderServiceSuite))
 }

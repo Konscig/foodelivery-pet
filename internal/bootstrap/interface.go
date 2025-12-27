@@ -14,4 +14,4 @@ type EventConsumer interface {
 type EventProducer interface {
 	SendProtoMessage(topic string, key []byte, value []byte) error
 	Close() error
-}
+} 
